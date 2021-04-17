@@ -1,0 +1,3 @@
+[submodule "ml-fairness-gym"]
+	path = ml-fairness-gym
+	url = git@github.com:luksfarris/ml-fairness-gym.git
