@@ -1,10 +1,8 @@
 import functools
 import attr
-
-from ml_fairness_gym.environments.recommenders import movie_lens_utils
+from mlfairnessgym.environments.recommenders import movie_lens_utils
 from ml_fairness_gym.environments.recommenders import recsim_samplers
 from ml_fairness_gym.environments.recommenders import movie_lens_dynamic as movie_lens
-
 from recsim.simulator import recsim_gym
 
 

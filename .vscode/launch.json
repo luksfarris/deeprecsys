@@ -5,11 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Python: Main Test",
             "type": "python",
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Download Movielens Dataset",
+            "type": "python",
+            "module": "environments.recommenders.download_movielens",
+            "cwd": "${workspaceFolder}/ml-fairness-gym/",
+            "request": "launch"
+        },
+        {
+            "name": "Pytest",
+            "type": "python",
+            "module": "pytest",
+            "cwd": "${workspaceFolder}/pydeeprecsys/",
+            "request": "launch"
         }
     ]
 }

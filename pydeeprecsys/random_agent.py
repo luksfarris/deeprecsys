@@ -1,8 +1,9 @@
 from gym import Env
-from typing import List
+from typing import List, Callable
+import numpy as np
 
 
-def movielens_feature_transformer(state: dict, action_slate: List[int]) -> List[int]:
+def movielens_state_encoder(state: dict, action_slate: List[int]) -> List[int]:
     user_features = state["user"]
     response_features = state["response"]
     doc_features = [
@@ -29,14 +30,23 @@ def movielens_feature_transformer(state: dict, action_slate: List[int]) -> List[
     ]
 
 
-def movielens_action_transformer(action) -> List[float]:
-    pass
+def movielens_action_selector(
+    action_predictors: List[float], slate_size: int = 1
+) -> List[float]:
+    """Gets the index of the top N highest elements in the predictor array."""
+    return np.argsort(action_predictors)[-slate_size:][::-1]
 
 
 class RandomAgent:
-    def __init__(self, env: Env, feature_transformer=None):
+    def __init__(
+        self,
+        env: Env,
+        state_encoder: Callable = None,
+        action_selector: Callable = None,
+    ):
         self.env = env
-        self.features_from_state = feature_transformer or movielens_feature_transformer
+        self.features_from_state = state_encoder or movielens_state_encoder
+        self.action_selector = action_selector or movielens_action_selector
 
     def get_next_action(self, state):
         return self.env.action_space.sample()

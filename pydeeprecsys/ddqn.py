@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from collections import namedtuple, deque
 from copy import deepcopy
-from random_agent import RandomAgent
+from pydeeprecsys.random_agent import RandomAgent
 
 
 class DDQN(torch.nn.Module):
@@ -94,7 +94,8 @@ class DDQNAgent(RandomAgent):
         dnn_sync_frequency=2000,
         nblock=20,
         reward_threshold=1000,
-        feature_transformer=None,
+        state_encoder=None,
+        action_selector=None,
     ):
         """ "
         Params
@@ -110,7 +111,7 @@ class DDQNAgent(RandomAgent):
              la media de recompensa
         reward_threshold: umbral de recompensa definido en el entorno
         """
-        super().__init__(env, feature_transformer)
+        super().__init__(env, state_encoder, action_selector)
         self.env = env
         self.dnnetwork = dnnetwork
         self.target_network = deepcopy(dnnetwork)
