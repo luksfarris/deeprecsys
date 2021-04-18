@@ -1,7 +1,7 @@
-from movielens_fairness_env import prepare_environment
-from random_agent import RandomAgent
-from benchmark import run
-from ddqn import create_ddqn_agent
+from pydeeprecsys.movielens_fairness_env import prepare_environment
+from pydeeprecsys.random_agent import RandomAgent
+from pydeeprecsys.benchmark import run
+from pydeeprecsys.ddqn import create_ddqn_agent
 
 
 def main():

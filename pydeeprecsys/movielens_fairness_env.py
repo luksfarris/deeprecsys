@@ -1,17 +1,17 @@
 import functools
 import attr
 from mlfairnessgym.environments.recommenders import movie_lens_utils
-from ml_fairness_gym.environments.recommenders import recsim_samplers
-from ml_fairness_gym.environments.recommenders import movie_lens_dynamic as movie_lens
+from mlfairnessgym.environments.recommenders import recsim_samplers
+from mlfairnessgym.environments.recommenders import movie_lens_dynamic as movie_lens
 from recsim.simulator import recsim_gym
 
 
 def prepare_environment():
-    data_dir = "./ml_fairness_gym/output"
+    data_dir = "./output"
     env_config = movie_lens.EnvConfig(
         seeds=movie_lens.Seeds(0, 0),
         data_dir=data_dir,
-        embeddings_path="./ml_fairness_gym/environments/recommenders/movielens_factorization.json",
+        embeddings_path="./mlfairnessgym/environments/recommenders/movielens_factorization.json",
     )
     initial_embeddings = movie_lens_utils.load_embeddings(env_config)
     # user constructor

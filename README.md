@@ -33,12 +33,14 @@ python -m mlfairnessgym.environments.recommenders.download_movielens
 This project uses `pytest` and `coverage`.
 
 ```bash
-# from ./pydeeprecsys
+# from project root
 poetry run coverage run -m pytest
+poetry run coverage html -d html/coverage
 ```
 
 ## Generate Docs
 
 ```bash
 # from project root
+poetry run pdoc --html pydeeprecsys
 ```
