@@ -8,6 +8,7 @@
             "name": "Python: Main Test",
             "type": "python",
             "request": "launch",
+            "cwd": "${workspaceFolder}",
             "program": "main.py",
             "console": "integratedTerminal"
         },
