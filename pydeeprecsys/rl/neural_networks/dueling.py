@@ -2,7 +2,7 @@ from torch import FloatTensor, LongTensor, BoolTensor, gather, Tensor
 from numpy import array, ravel
 from torch.nn import Module, ReLU, Linear, Sequential, functional
 from torch.optim import Adam
-from typing import List, Any, Tuple
+from typing import List, Any, Tuple, Optional
 from pydeeprecsys.rl.neural_networks.noisy_layer import NoisyLayer
 from pydeeprecsys.rl.experience_replay.priority_replay_buffer import (
     PrioritizedExperienceReplayBuffer,
@@ -21,12 +21,14 @@ class DuelingDDQN(Module):
         noise_sigma: float = 0.17,
         discount_factor: float = 0.99,
         device: str = "cpu",
+        statistics: Optional[LearningStatistics] = None,
     ):
         super().__init__()
         self.device = device
         self.discount_factor = discount_factor
         self._build_network(n_input, n_output, noise_sigma)
         self.optimizer = Adam(self.parameters(), lr=learning_rate)
+        self.statistics = statistics
 
     def _build_network(self, n_input: int, n_output: int, noise_sigma: float):
         """Builds the dueling network with noisy layers, the value
@@ -80,10 +82,13 @@ class DuelingDDQN(Module):
         loss.backward()
         self.optimizer.step()
         # store loss in statistics
-        if self.device == "cuda":
-            LearningStatistics.loss.append(loss.detach().cpu().numpy())
-        else:
-            LearningStatistics.loss.append(loss.detach().numpy())
+        if self.statistics:
+            if self.device == "cuda":
+                self.statistics.append_metric(
+                    "loss", float(loss.detach().cpu().numpy())
+                )
+            else:
+                self.statistics.append_metric("loss", float(loss.detach().numpy()))
         # update buffer priorities
         errors_from_batch = td_error.detach().cpu().numpy()
         buffer.update_priorities(experiences, errors_from_batch)

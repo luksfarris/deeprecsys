@@ -1,5 +1,5 @@
 from numpy.random import RandomState
-from typing import Any
+from typing import Any, Optional
 from numpy import arange
 from copy import deepcopy
 from pydeeprecsys.rl.neural_networks.dueling import DuelingDDQN
@@ -7,6 +7,7 @@ from pydeeprecsys.rl.experience_replay.priority_replay_buffer import (
     PrioritizedExperienceReplayBuffer,
 )
 from pydeeprecsys.rl.agents.agent import ReinforcementLearning
+from pydeeprecsys.rl.learning_statistics import LearningStatistics
 
 
 class RainbowDQNAgent(ReinforcementLearning):
@@ -31,10 +32,16 @@ class RainbowDQNAgent(ReinforcementLearning):
         discount_factor: float = 0.99,
         learning_rate: float = 0.99,
         random_state: RandomState = RandomState(),
+        statistics: Optional[LearningStatistics] = None,
     ):
 
         self.network = DuelingDDQN(
-            input_size, output_size, learning_rate, noise_sigma, discount_factor
+            input_size,
+            output_size,
+            learning_rate,
+            noise_sigma,
+            discount_factor,
+            statistics=statistics,
         )
         self.target_network = deepcopy(self.network)
 

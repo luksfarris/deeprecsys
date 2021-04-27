@@ -1,5 +1,9 @@
 # PyDeepRecSys
 
+This project is a WIP. Please don't pay attention to it.
+
+# Python Version
+
 This project, due to its dependencies, is meant to be used with Python `3.6`.
 
 # Installing Dependencies

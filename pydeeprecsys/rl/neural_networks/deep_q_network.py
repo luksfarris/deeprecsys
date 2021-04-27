@@ -2,7 +2,7 @@ from torch import FloatTensor, max, LongTensor, BoolTensor, gather, Tensor
 from numpy import array, ravel
 from torch.nn import Sequential, Linear, ReLU, MSELoss, Module
 from torch.optim import Adam
-from typing import List, Any, Tuple
+from typing import List, Any, Tuple, Optional
 from pydeeprecsys.rl.learning_statistics import LearningStatistics
 
 
@@ -26,11 +26,13 @@ class DeepQNetwork(Module):
         architecture: Module,
         discount_factor: float = 0.99,
         device: str = "cpu",
+        statistics: Optional[LearningStatistics] = None,
     ):
         super().__init__()
         self.device = device
         self.model = architecture
         self.discount_factor = discount_factor
+        self.statistics = statistics
         self.optimizer = Adam(self.parameters(), lr=learning_rate)
         if self.device == "cuda":
             self.model.cuda()
@@ -49,10 +51,11 @@ class DeepQNetwork(Module):
         loss.backward()
         self.optimizer.step()
         # store loss in statistics
-        if self.device == "cuda":
-            LearningStatistics.loss.append(loss.detach().cpu().numpy())
-        else:
-            LearningStatistics.loss.append(loss.detach().numpy())
+        if self.statistics:
+            if self.device == "cuda":
+                self.statistics.append_metric("loss", loss.detach().cpu().numpy())
+            else:
+                self.statistics.append_metric("loss", loss.detach().numpy())
 
     def _calculate_loss(self, experiences: List[Tuple]) -> Tensor:
         states, actions, rewards, dones, next_states = [i for i in experiences]

@@ -1,6 +1,6 @@
 from gym import make, spec, Env
 from collections import namedtuple, defaultdict
-from typing import Any, List
+from typing import Any, List, Optional
 import math
 from numpy import mean
 import highway_env  # noqa: F401
@@ -85,14 +85,22 @@ class Manager(object):
             self.env.close()
         return episode_outputs
 
-    def train(self, rl: DQNAgent, max_episodes=50, should_print: bool = True):
+    def train(
+        self,
+        rl: DQNAgent,
+        statistics: Optional[LearningStatistics] = None,
+        max_episodes=50,
+        should_print: bool = True,
+    ):
         if should_print is True:
             print("Training...")
-        LearningStatistics.clear()
         episode_rewards = []
         for episode in range(max_episodes):
             state = self.env.reset()
             rewards = []
+            if statistics:
+                statistics.episode = episode
+                statistics.timestep = 0
             done = False
             while done is False:
                 action = rl.action_for_state(state)
@@ -102,11 +110,14 @@ class Manager(object):
                 )  # guardar experiencia en el buffer
                 rewards.append(reward)
                 state = new_state.copy()
+                if statistics:
+                    statistics.timestep += 1
             episode_rewards.append(sum(rewards))
             moving_average = mean(episode_rewards[-100:])
-            LearningStatistics.episode_rewards.append(sum(rewards))
-            LearningStatistics.timestep_rewards.append(rewards)
-            LearningStatistics.moving_rewards.append(moving_average)
+            if statistics:
+                statistics.append_metric("episode_rewards", sum(rewards))
+                statistics.append_metric("timestep_rewards", rewards)
+                statistics.append_metric("moving_rewards", moving_average)
             if should_print is True:
                 print(
                     "\rEpisode {:d} Mean Rewards {:.2f} \t\t".format(
@@ -124,6 +135,7 @@ class Manager(object):
         agent: type,
         params: dict,
         default_params: dict,
+        learning_statistics: LearningStatistics,
         episodes: int = 100,
         runs_per_combination: int = 3,
     ) -> dict:
@@ -141,9 +153,9 @@ class Manager(object):
                     print(f"Testing combination {p_name}={value} round {run}")
                     self.train(rl=rl, max_episodes=episodes, should_print=False)
                     combination_results[combination_key].append(
-                        LearningStatistics.moving_rewards[-1]
+                        learning_statistics.moving_rewards[-1]
                     )
-                    print(f"result was {LearningStatistics.moving_rewards[-1]}")
+                    print(f"result was {learning_statistics.moving_rewards[-1]}")
         return combination_results
 
 
