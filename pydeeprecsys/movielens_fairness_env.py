@@ -7,7 +7,7 @@ from mlfairnessgym.environments.recommenders import movie_lens_dynamic as movie_
 from recsim.simulator import recsim_gym
 from gym.envs.registration import register
 from gym import Env
-from typing import List
+from typing import List, Union
 import numpy as np
 
 _env_specs = {
@@ -19,16 +19,19 @@ register(**_env_specs)
 
 
 class MovieLensFairness(Env):
-    """ TODO: implement multiple slate sizes """
-
-    def __init__(self, slate_size: int = 1):
-        self.internal_env = self.prepare_environment()
+    def __init__(self, slate_size: int = 1, seed: int = 42):
         self.slate_size = slate_size
+        self.internal_env = self.prepare_environment()
+        self._rng = np.random.RandomState(seed)
 
-    def step(self, action):
+    def step(self, action: Union[int, List[int]]):
         """ Normalize reward and flattens/normalizes state """
-        state, reward, done, info = self.internal_env.step([action])
-        return self.movielens_state_encoder(state, [action]), reward / 5, done, info
+        if type(action) in [list, np.ndarray, np.array]:
+            state, reward, done, info = self.internal_env.step(action)
+            return self.movielens_state_encoder(state, action), reward / 5, done, info
+        else:
+            state, reward, done, info = self.internal_env.step([action])
+            return self.movielens_state_encoder(state, [action]), reward / 5, done, info
 
     def reset(self):
         """ flattens/normalizes state """
@@ -50,14 +53,28 @@ class MovieLensFairness(Env):
     def observation_space(self):
         return self.internal_env.observation_space
 
-    @staticmethod
-    def movielens_state_encoder(state: dict, action_slate: List[int]) -> List[int]:
+    def movielens_state_encoder(
+        self, state: dict, action_slate: List[int]
+    ) -> List[int]:
+        """if the slate size is > 1, we need to guarantee the Single choice (SC)
+        assumption, as described in the paper `SLATEQ: A Tractable Decomposition
+        for Reinforcement Learning withRecommendation Sets` by randomly selecting
+        one of the interactions
+        """
         user_features = state["user"]
         response_features = state["response"]
         doc_features = [
             state["doc"][str(action_slate[i])]["genres"]
             for i in range(len(action_slate))
         ]
+        if self.slate_size > 1:
+            if response_features:
+                response_features = (
+                    response_features[self._rng.choice(self.slate_size)],
+                )
+            if doc_features:
+                doc_features = [doc_features[self._rng.choice(self.slate_size)]]
+
         refined_state = {
             "user": user_features,
             "response": response_features,
@@ -80,13 +97,11 @@ class MovieLensFairness(Env):
             ]
         )
 
-    @staticmethod
-    def slate_action_selector(qvals: List[float], slate_size: int = 1) -> List[float]:
+    def slate_action_selector(self, qvals: List[float]) -> List[float]:
         """Gets the index of the top N highest elements in the predictor array."""
-        return np.argsort(qvals)[-slate_size:][::-1]
+        return np.argsort(qvals)[-self.slate_size :][::-1]
 
-    @staticmethod
-    def prepare_environment():
+    def prepare_environment(self):
         current_path = os.path.dirname(__file__)
         data_dir = os.path.join(current_path, "../output")
         embeddings_path = os.path.join(
@@ -127,7 +142,7 @@ class MovieLensFairness(Env):
             user_model,
             document_sampler,
             num_candidates=document_sampler.size(),
-            slate_size=1,
+            slate_size=self.slate_size,
             resample_documents=False,
         )
         _ = env.reset()

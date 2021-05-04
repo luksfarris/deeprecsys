@@ -23,3 +23,16 @@ def test_step():
     assert 0 <= reward <= 1
     assert done in [True, False]
     assert type(info) is dict
+
+
+def test_slate_environment():
+    env = MovieLensFairness(slate_size=5)
+    obs = env.reset()
+    assert len(obs) == 25
+    next_action = env.action_space.sample()
+    assert len(next_action) == 5
+    state, reward, done, info = env.step(next_action)
+    assert len(state) == 25
+    assert 0 <= reward <= 1
+    assert done is False
+    assert type(info) == dict
