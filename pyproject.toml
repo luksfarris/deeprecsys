@@ -37,14 +37,20 @@ tqdm = "^4.60.0"
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-
-[tool.coverage.run]
-omit= ['venv/*']
-
 [tool.pytest.ini_options]
 testpaths = [
     "pydeeprecsys/tests"
 ]
 
+[tool.coverage.run]
+omit= ['venv/*', 'pydeeprecsys/tests/*', 'mlfairnessgym/*']
+
+
+
 [tool.coverage.report]
 omit= ['venv/*']
+exclude_lines = [
+    'raise NotImplementedError',
+    'pass'
+]
+

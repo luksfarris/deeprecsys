@@ -26,13 +26,6 @@ class DecayingEpsilonGreedy(ReinforcementLearning, ABC):
             action = self.exploit(state)
         return action
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
-        super().store_experience(state, action, reward, done, new_state)
-        if done:
-            self._decay()
-
     def _decay(self):
         """ Slowly decrease the exploration probability. """
         self.epsilon = max(

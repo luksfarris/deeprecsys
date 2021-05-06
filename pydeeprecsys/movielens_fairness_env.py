@@ -9,6 +9,7 @@ from gym.envs.registration import register
 from gym import Env
 from typing import List, Union
 import numpy as np
+import math
 
 _env_specs = {
     "id": "MovieLensFairness-v0",
@@ -23,6 +24,32 @@ class MovieLensFairness(Env):
         self.slate_size = slate_size
         self.internal_env = self.prepare_environment()
         self._rng = np.random.RandomState(seed)
+        self.ndcg = []
+
+    def _get_product_relevance(self, product_id: int) -> float:
+        """ Relevance in range (0,1) """
+        topic_affinity = (
+            self.internal_env.environment.user_model._user_state.topic_affinity
+        )
+        movie_vector = [
+            d.movie_vec
+            for d in self.internal_env.environment._document_sampler._corpus
+            if d._doc_id == product_id
+        ][0]
+        return np.clip(
+            np.dot(movie_vector, topic_affinity),
+            movie_lens.User.MIN_SCORE,
+            movie_lens.User.MAX_SCORE,
+        )
+
+    def _get_dcg(self, relevances: List[float]) -> float:
+        return sum([relevances[i] / math.log(i + 2, 2) for i in range(len(relevances))])
+
+    def _calculate_ndcg(self, slate_product_ids: List[int]) -> float:
+        relevances = [self._get_product_relevance(p) for p in slate_product_ids]
+        dcg = self._get_dcg(relevances)
+        idcg = self._get_dcg(sorted(relevances, reverse=True))
+        return dcg / idcg
 
     def step(self, action: Union[int, List[int]]):
         """ Normalize reward and flattens/normalizes state """
@@ -36,6 +63,7 @@ class MovieLensFairness(Env):
     def reset(self):
         """ flattens/normalizes state """
         state = self.internal_env.reset()
+        self.ndcg = []
         return self.movielens_state_encoder(state, [])
 
     def render(self, mode="human", close=False):

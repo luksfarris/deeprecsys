@@ -1,6 +1,7 @@
 from gym import make
 from pydeeprecsys.movielens_fairness_env import MovieLensFairness  # noqa: F401
 import numpy as np
+import pytest
 
 
 def test_env_generation():
@@ -36,3 +37,9 @@ def test_slate_environment():
     assert 0 <= reward <= 1
     assert done is False
     assert type(info) == dict
+
+
+def test_ndcg():
+    env = MovieLensFairness(slate_size=5)
+    env.reset()
+    assert env._calculate_ndcg([1, 2, 3, 4, 5]) == pytest.approx(0.781, abs=1e-2)
