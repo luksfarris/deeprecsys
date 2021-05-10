@@ -15,7 +15,7 @@ class RainbowDQNAgent(ReinforcementLearning):
     """Instead of sampling randomly from the buffer we prioritize experiences with PER
     Instead of epsilon-greedy we use gaussian noisy layers for exploration
     Instead of the Q value we calculate Value and Advantage (Dueling DQN).
-    This implementation does not include the Categorical DQN part."""
+    This implementation does not include the Categorical DQN part (yet)."""
 
     def __init__(
         self,
