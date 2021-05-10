@@ -6,6 +6,7 @@ from mlfairnessgym.environments.recommenders import recsim_samplers
 from mlfairnessgym.environments.recommenders import movie_lens_dynamic as movie_lens
 from recsim.simulator import recsim_gym
 from gym.envs.registration import register
+from gym.spaces import Box, Discrete
 from gym import Env
 from typing import List, Union
 import numpy as np
@@ -71,7 +72,10 @@ class MovieLensFairness(Env):
 
     @property
     def action_space(self):
-        return self.internal_env.action_space
+        if self.slate_size == 1:
+            return Discrete(self.internal_env.action_space.nvec[0])
+        else:
+            return self.internal_env.action_space
 
     @property
     def reward_range(self):
@@ -79,15 +83,15 @@ class MovieLensFairness(Env):
 
     @property
     def observation_space(self):
-        return self.internal_env.observation_space
+        return Box(low=0, high=1.0, shape=(25,), dtype=np.float32)
 
     def movielens_state_encoder(
         self, state: dict, action_slate: List[int]
     ) -> List[int]:
         """if the slate size is > 1, we need to guarantee the Single choice (SC)
         assumption, as described in the paper `SLATEQ: A Tractable Decomposition
-        for Reinforcement Learning withRecommendation Sets` by randomly selecting
-        one of the interactions
+        for Reinforcement Learning withRecommendation Sets`
+        TODO: by randomly selecting one of the interactions?
         """
         user_features = state["user"]
         response_features = state["response"]

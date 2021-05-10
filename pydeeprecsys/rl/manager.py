@@ -169,7 +169,7 @@ class HighwayManager(Manager):
 class CartpoleManager(Manager):
     def __init__(self, random_state: int = 42):
         super().__init__(env_name="CartPole-v0", random_state=random_state)
-        self.reward_threshold = 100
+        self.reward_threshold = 50
 
 
 class MovieLensFairnessManager(Manager):
