@@ -6,6 +6,10 @@ from pydeeprecsys.rl.neural_networks.dueling import DuelingDDQN
 from pydeeprecsys.rl.experience_replay.priority_replay_buffer import (
     PrioritizedExperienceReplayBuffer,
 )
+from pydeeprecsys.rl.experience_replay.buffer_parameters import (
+    PERBufferParameters,
+    ExperienceReplayBufferParameters,
+)
 from pydeeprecsys.rl.agents.agent import ReinforcementLearning
 from pydeeprecsys.rl.learning_statistics import LearningStatistics
 
@@ -46,12 +50,16 @@ class RainbowDQNAgent(ReinforcementLearning):
         self.target_network = deepcopy(self.network)
 
         self.buffer = PrioritizedExperienceReplayBuffer(
-            max_experiences=buffer_size,
-            min_experiences_to_start_predicting=buffer_burn_in,
-            batch_size=batch_size,
-            alpha=priority_importance,
-            beta_growth=priority_weigth_growth,
-            random_state=random_state,
+            ExperienceReplayBufferParameters(
+                max_experiences=buffer_size,
+                minimum_experiences_to_start_predicting=buffer_burn_in,
+                batch_size=batch_size,
+                random_state=random_state,
+            ),
+            PERBufferParameters(
+                alpha=priority_importance,
+                beta_growth=priority_weigth_growth,
+            ),
         )
         self.step_count = 0
         self.network_update_frequency = network_update_frequency

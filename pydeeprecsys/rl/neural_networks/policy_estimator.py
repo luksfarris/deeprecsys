@@ -1,13 +1,14 @@
 from typing import Any, List
 from torch.optim import Adam
-from torch.nn import Module, Sequential, Softmax, Linear, Tanh
+from torch.nn import Sequential, Softmax, Linear, Tanh
 from torch import FloatTensor, multinomial, Tensor
 from torch import sum as torch_sum
 from torch.distributions import Categorical
 import numpy as np
+from pydeeprecsys.rl.neural_networks.base_network import BaseNetwork
 
 
-class PolicyEstimator(Module):
+class PolicyEstimator(BaseNetwork):
     """Estimates the policy function: the probability of each action being the
     best decision in a particular state."""
 
@@ -17,10 +18,8 @@ class PolicyEstimator(Module):
         hidden_layers: List[int],
         output_size: int,
         learning_rate=1e-2,
-        device: str = "cpu",
     ):
         super().__init__()
-
         layers = [input_size] + hidden_layers + [output_size]
         architecture = []
         for i in range(len(layers) - 2):
@@ -30,7 +29,6 @@ class PolicyEstimator(Module):
         architecture.append(Softmax(dim=-1))
         self.model = Sequential(*architecture)
         self.optimizer = Adam(self.parameters(), lr=learning_rate)
-        self.device = device
         if self.device == "cuda":
             self.model.cuda()
 

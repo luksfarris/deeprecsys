@@ -2,6 +2,9 @@ from numpy.random import RandomState
 from typing import List, Any
 from numpy import arange
 from pydeeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
+from pydeeprecsys.rl.experience_replay.buffer_parameters import (
+    ExperienceReplayBufferParameters,
+)
 from pydeeprecsys.rl.agents.epsilon_greedy import DecayingEpsilonGreedy
 from pydeeprecsys.rl.neural_networks.deep_q_network import (
     DeepQNetwork,
@@ -38,10 +41,12 @@ class DQNAgent(DecayingEpsilonGreedy):
         )
         self.network = DeepQNetwork(learning_rate, architecture, discount_factor)
         self.buffer = ExperienceReplayBuffer(
-            max_experiences=buffer_size,
-            minimum_experiences_to_start_predicting=buffer_burn_in,
-            batch_size=batch_size,
-            random_state=random_state,
+            ExperienceReplayBufferParameters(
+                max_experiences=buffer_size,
+                minimum_experiences_to_start_predicting=buffer_burn_in,
+                batch_size=batch_size,
+                random_state=random_state,
+            )
         )
         self.step_count = 0
         self.network_update_frequency = network_update_frequency

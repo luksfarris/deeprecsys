@@ -1,10 +1,13 @@
 from collections import namedtuple
 from typing import Any, List, Tuple
 import numpy
-from numpy.random import RandomState
 from pydeeprecsys.rl.experience_replay.experience_buffer import (
     Experience,
     ExperienceReplayBuffer,
+)
+from pydeeprecsys.rl.experience_replay.buffer_parameters import (
+    PERBufferParameters,
+    ExperienceReplayBufferParameters,
 )
 import numpy as np
 
@@ -16,30 +19,19 @@ PriorityExperience = namedtuple(
 class PrioritizedExperienceReplayBuffer(ExperienceReplayBuffer):
     def __init__(
         self,
-        max_experiences: int,
-        min_experiences_to_start_predicting: int,
-        batch_size: int,
-        random_state: RandomState,
-        beta: float = 0.01,
-        beta_growth: float = 0.001,
-        alpha: float = 0.6,
-        epsilon: float = 0.01,
+        buffer_parameters=ExperienceReplayBufferParameters(),
+        per_parameters=PERBufferParameters(),
     ):
-        super().__init__(
-            max_experiences=max_experiences,
-            minimum_experiences_to_start_predicting=min_experiences_to_start_predicting,
-            batch_size=batch_size,
-            random_state=random_state,
-        )
+        super().__init__(buffer_parameters)
         # beta controls the effect of the weights (how much to learn from each
         # experience in the batch)
-        self.beta = beta
-        self.beta_growth = beta_growth
+        self.beta = per_parameters.beta
+        self.beta_growth = per_parameters.beta_growth
         # alpha controls the effect of the priority (how much priority is affected
         # by the loss)
-        self.alpha = alpha
+        self.alpha = per_parameters.alpha
         # epsilon guarantees no experience has priority zero
-        self.epsilon = epsilon
+        self.epsilon = per_parameters.epsilon
 
     def priorities(self) -> numpy.array:
         """ Gets the priority for each experience in the queue """

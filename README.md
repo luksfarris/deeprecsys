@@ -48,16 +48,3 @@ poetry run coverage html -d html/coverage
 # from project root
 poetry run pdoc --html pydeeprecsys
 ```
-
-
-
-## Short term TODO list
-
-- [ ] Find out a proper learning gym env
-- [ ] Make sure DDQN works properly
-- [ ] ...
-
-
-# Long term TODO list
-- [ ] CI
-- [ ] Precommit hooks (black, flake8, mypy, ...)

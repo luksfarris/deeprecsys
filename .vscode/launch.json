@@ -24,7 +24,11 @@
             "type": "python",
             "module": "pytest",
             "cwd": "${workspaceFolder}/pydeeprecsys/",
-            "request": "launch"
+            "request": "launch",
+            "args": [
+                "--lf",
+                "-x"
+            ]
         }
     ]
 }

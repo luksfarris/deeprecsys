@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from collections import namedtuple, deque
-from numpy.random import RandomState
 from typing import List, Tuple, Any
+from pydeeprecsys.rl.experience_replay.buffer_parameters import (
+    ExperienceReplayBufferParameters,
+)
 
 Experience = namedtuple(
     "Experience", field_names=["state", "action", "reward", "done", "next_state"]
@@ -27,18 +29,15 @@ class ExperienceBuffer(ABC):
 class ExperienceReplayBuffer(ExperienceBuffer):
     def __init__(
         self,
-        max_experiences: int = 50,
-        minimum_experiences_to_start_predicting: int = 32,
-        batch_size: int = 32,
-        random_state: RandomState = RandomState(),
+        parameters=ExperienceReplayBufferParameters(),
     ):
         self.minimum_experiences_to_start_predicting = (
-            minimum_experiences_to_start_predicting
+            parameters.minimum_experiences_to_start_predicting
         )
-        self.random_state = random_state
+        self.random_state = parameters.random_state
         # create double ended queue to store the experiences
-        self.experience_queue = deque(maxlen=max_experiences)
-        self.batch_size = batch_size
+        self.experience_queue = deque(maxlen=parameters.max_experiences)
+        self.batch_size = parameters.batch_size
 
     def sample_batch(self) -> List[Tuple]:
         """ Samples a given number of experiences from the queue """

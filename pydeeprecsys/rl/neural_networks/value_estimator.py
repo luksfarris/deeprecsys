@@ -1,12 +1,13 @@
 from typing import List
 from pydeeprecsys.rl.neural_networks.deep_q_network import sequential_architecture
 from torch.optim import Adam
-from torch.nn import MSELoss, Module
+from torch.nn import MSELoss
 from torch import FloatTensor
 import numpy as np
+from pydeeprecsys.rl.neural_networks.base_network import BaseNetwork
 
 
-class ValueEstimator(Module):
+class ValueEstimator(BaseNetwork):
     """Estimates the value function: the expected return of being in a
     particular state"""
 
@@ -16,14 +17,12 @@ class ValueEstimator(Module):
         hidden_layers: List[int],
         output_size: int,
         learning_rate=0.1,
-        device: str = "cpu",
     ):
         super().__init__()
         self.model = sequential_architecture(
             [input_size] + hidden_layers + [output_size]
         )
         self.optimizer = Adam(self.parameters(), lr=learning_rate)
-        self.device = device
         if self.device == "cuda":
             self.model.cuda()
         self.loss_function = MSELoss()
