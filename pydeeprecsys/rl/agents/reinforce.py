@@ -1,6 +1,9 @@
 from pydeeprecsys.rl.agents.agent import ReinforcementLearning
 from typing import Any
 from pydeeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
+from pydeeprecsys.rl.experience_replay.buffer_parameters import (
+    ExperienceReplayBufferParameters,
+)
 from pydeeprecsys.rl.neural_networks.policy_estimator import PolicyEstimator
 from pydeeprecsys.rl.neural_networks.value_estimator import ValueEstimator
 
@@ -34,7 +37,9 @@ class ReinforceAgent(ReinforcementLearning):
         self.reset_buffer()
 
     def reset_buffer(self):
-        self.buffer = ExperienceReplayBuffer(10000, 1, 1)
+        self.buffer = ExperienceReplayBuffer(
+            ExperienceReplayBufferParameters(10000, 1, 1)
+        )
 
     def action_for_state(self, state: Any) -> Any:
         return self.policy_estimator.predict(state)

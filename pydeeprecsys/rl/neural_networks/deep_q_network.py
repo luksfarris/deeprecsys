@@ -4,6 +4,7 @@ from torch.nn import Sequential, Linear, ReLU, MSELoss, Module
 from torch.optim import Adam
 from typing import List, Any, Tuple, Optional
 from pydeeprecsys.rl.learning_statistics import LearningStatistics
+from pydeeprecsys.rl.neural_networks.base_network import BaseNetwork
 
 
 def sequential_architecture(layers: List[int], bias: bool = True) -> Module:
@@ -16,7 +17,7 @@ def sequential_architecture(layers: List[int], bias: bool = True) -> Module:
     return Sequential(*architecture)
 
 
-class DeepQNetwork(Module):
+class DeepQNetwork(BaseNetwork):
     """Implementation of a Deep Q Network with a Sequential arquitecture. Layers are
     supposed to be provided as a list of torch modules."""
 
@@ -25,11 +26,9 @@ class DeepQNetwork(Module):
         learning_rate: float,
         architecture: Module,
         discount_factor: float = 0.99,
-        device: str = "cpu",
         statistics: Optional[LearningStatistics] = None,
     ):
         super().__init__()
-        self.device = device
         self.model = architecture
         self.discount_factor = discount_factor
         self.statistics = statistics

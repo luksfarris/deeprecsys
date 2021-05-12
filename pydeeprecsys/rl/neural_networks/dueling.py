@@ -8,9 +8,10 @@ from pydeeprecsys.rl.experience_replay.priority_replay_buffer import (
     PrioritizedExperienceReplayBuffer,
 )
 from pydeeprecsys.rl.learning_statistics import LearningStatistics
+from pydeeprecsys.rl.neural_networks.base_network import BaseNetwork
 
 
-class DuelingDDQN(Module):
+class DuelingDDQN(BaseNetwork):
     """ Dueling DQN with Double DQN and Noisy Networks """
 
     def __init__(
@@ -20,11 +21,9 @@ class DuelingDDQN(Module):
         learning_rate: float,
         noise_sigma: float = 0.17,
         discount_factor: float = 0.99,
-        device: str = "cpu",
         statistics: Optional[LearningStatistics] = None,
     ):
         super().__init__()
-        self.device = device
         self.discount_factor = discount_factor
         self._build_network(n_input, n_output, noise_sigma)
         self.optimizer = Adam(self.parameters(), lr=learning_rate)
