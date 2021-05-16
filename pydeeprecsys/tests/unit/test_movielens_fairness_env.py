@@ -42,4 +42,7 @@ def test_slate_environment():
 def test_ndcg():
     env = MovieLensFairness(slate_size=5)
     env.reset()
-    assert env._calculate_ndcg([1, 2, 3, 4, 5]) == pytest.approx(0.781, abs=1e-2)
+    expected_ndcg = pytest.approx(0.781, abs=1e-2)
+    assert env._calculate_ndcg([1, 2, 3, 4, 5]) == expected_ndcg
+    env.step([1, 2, 3, 4, 5])
+    assert env.ndcg[0] == expected_ndcg

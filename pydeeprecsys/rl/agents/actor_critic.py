@@ -1,4 +1,3 @@
-import numpy as np
 from pydeeprecsys.rl.agents.agent import ReinforcementLearning
 from typing import Any, List
 from pydeeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
@@ -6,22 +5,29 @@ from pydeeprecsys.rl.experience_replay.buffer_parameters import (
     ExperienceReplayBufferParameters,
 )
 from pydeeprecsys.rl.neural_networks.policy_estimator import PolicyEstimator
-from torch import FloatTensor
+from pydeeprecsys.rl.neural_networks.value_estimator import ValueEstimator
 
 
-class ReinforceAgent(ReinforcementLearning):
+class ActorCriticAgent(ReinforcementLearning):
     """Policy estimator using a value estimator as a baseline.
-    It's on-policy, for discrete action spaces, and episodic environments."""
+    It's on-policy, for discrete action spaces, and episodic environments.
+    This implementation uses stochastic policies.
+    TODO: could be a sub class of reinforces"""
 
     def __init__(
         self,
         n_actions: int,
         state_size: int,
-        discount_factor: int = 0.99,  # a.k.a gamma
+        discount_factor: int = 0.99,
         learning_rate=1e-3,
     ):
         self.episode_count = 0
-
+        self.value_estimator = ValueEstimator(
+            state_size,
+            [state_size * 2, int(state_size / 2)],
+            1,
+            learning_rate=learning_rate,
+        )
         self.policy_estimator = PolicyEstimator(
             state_size,
             [state_size * 2, state_size * 2],
@@ -54,26 +60,17 @@ class ReinforceAgent(ReinforcementLearning):
             self.learn_from_experiences()
             self.reset_buffer()
 
-    def discounted_rewards(self, rewards: np.array) -> np.array:
-        """From a list of rewards obtained in an episode, we calculate
-        the return minus the baseline. The baseline is the list of discounted
-        rewards minus the mean, divided by the standard deviation."""
-        discount_r = np.zeros_like(rewards)
-        timesteps = range(len(rewards))
-        reward_sum = 0
-        for i in reversed(timesteps):
-            reward_sum = rewards[i] + self.discount_factor * reward_sum
-            discount_r[i] = reward_sum
-        return_mean = discount_r.mean()
-        return_std = discount_r.std()
-        baseline = (discount_r - return_mean) / return_std
-        return baseline
-
     def learn_from_experiences(self):
         experiences = list(self.buffer.experience_queue)
-        states, actions, rewards, dones, next_states = zip(*experiences)
-        advantages = self.discounted_rewards(rewards)
-        advantages_tensor = FloatTensor(advantages).to(
-            device=self.policy_estimator.device
-        )
-        self.policy_estimator.update(states, advantages_tensor, actions)
+        for timestep, experience in enumerate(experiences):
+            total_return = 0
+            for i, t in enumerate(experiences[timestep:]):
+                total_return += (self.discount_factor ** i) * t.reward
+
+            # Calculate baseline/advantage
+            baseline_value = self.value_estimator.predict(experience.state).detach()
+            advantage = total_return - baseline_value
+            # Update our value estimator
+            self.value_estimator.update(experience.state, total_return)
+            # Update our policy estimator
+            self.policy_estimator.update(experience.state, advantage, experience.action)

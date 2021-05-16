@@ -1,8 +1,7 @@
 from pydeeprecsys.rl.neural_networks.base_network import BaseNetwork
 from pydeeprecsys.rl.neural_networks.deep_q_network import sequential_architecture
-import numpy as np
 import torch
-from torch import Tensor
+from torch import Tensor, FloatTensor
 from torch.nn import Module
 from torch.optim import Adam
 
@@ -18,8 +17,10 @@ class QValueEstimator(BaseNetwork):
         if self.device == "cuda":
             self.model.cuda()
 
-    def predict(self, states: np.array, actions: np.array):
-        inputs = torch.cat([states, actions], dim=1).to(device=self.device)
+    def predict(self, states: Tensor, actions: Tensor):
+        inputs = torch.cat([states, actions.type(FloatTensor)], dim=1).to(
+            device=self.device
+        )
         return self.model(inputs)
 
 

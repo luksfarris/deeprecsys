@@ -55,17 +55,21 @@ class MovieLensFairness(Env):
     def step(self, action: Union[int, List[int]]):
         """ Normalize reward and flattens/normalizes state """
         if type(action) in [list, np.ndarray, np.array]:
+            self.ndcg.append(self._calculate_ndcg(action))
             state, reward, done, info = self.internal_env.step(action)
-            return self.movielens_state_encoder(state, action), reward / 5, done, info
+            encoded_state, info = self.movielens_state_encoder(state, action, info)
+            return encoded_state, reward / 5, done, info
         else:
             state, reward, done, info = self.internal_env.step([action])
-            return self.movielens_state_encoder(state, [action]), reward / 5, done, info
+            encoded_state, info = self.movielens_state_encoder(state, [action], info)
+            return encoded_state, reward / 5, done, info
 
     def reset(self):
         """ flattens/normalizes state """
         state = self.internal_env.reset()
         self.ndcg = []
-        return self.movielens_state_encoder(state, [])
+        encoded_state, _ = self.movielens_state_encoder(state, [], {})
+        return encoded_state
 
     def render(self, mode="human", close=False):
         return self.internal_env.render(mode)
@@ -86,7 +90,7 @@ class MovieLensFairness(Env):
         return Box(low=0, high=1.0, shape=(25,), dtype=np.float32)
 
     def movielens_state_encoder(
-        self, state: dict, action_slate: List[int]
+        self, state: dict, action_slate: List[int], info: dict
     ) -> List[int]:
         """if the slate size is > 1, we need to guarantee the Single choice (SC)
         assumption, as described in the paper `SLATEQ: A Tractable Decomposition
@@ -101,9 +105,9 @@ class MovieLensFairness(Env):
         ]
         if self.slate_size > 1:
             if response_features:
-                response_features = (
-                    response_features[self._rng.choice(self.slate_size)],
-                )
+                chosen_action = self._rng.choice(self.slate_size)
+                response_features = (response_features[chosen_action],)
+                info["chosen_action"] = chosen_action
             if doc_features:
                 doc_features = [doc_features[self._rng.choice(self.slate_size)]]
 
@@ -113,7 +117,7 @@ class MovieLensFairness(Env):
             "slate_docs": doc_features,
         }
         # flattens the state
-        return np.array(
+        flat_state = np.array(
             [
                 refined_state["user"]["sex"],
                 refined_state["user"]["age"],
@@ -128,6 +132,7 @@ class MovieLensFairness(Env):
                 (refined_state.get("responsse") or ({},))[0].get("violence_score", 0),
             ]
         )
+        return flat_state, info
 
     def slate_action_selector(self, qvals: List[float]) -> List[float]:
         """Gets the index of the top N highest elements in the predictor array."""
