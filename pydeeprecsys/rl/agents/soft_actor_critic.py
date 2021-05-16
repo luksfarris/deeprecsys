@@ -16,6 +16,11 @@ from pydeeprecsys.rl.experience_replay.buffer_parameters import (
 
 
 class SoftActorCritic(ReinforcementLearning):
+    """TODO: there's things to fix in this agent. It needs temperature
+    optimization, and replace the current q-value estimator with the
+    Q-value + value + value_target estimators, like described here
+    https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html"""
+
     def __init__(
         self,
         action_space: Space,
@@ -31,7 +36,7 @@ class SoftActorCritic(ReinforcementLearning):
     ):
 
         self.action_space = action_space
-        n_actions = action_space.n
+        n_actions = 1  # TODO: slate size
         self.actor = GaussianActor(
             inputs=state_size,
             outputs=n_actions,
@@ -39,7 +44,6 @@ class SoftActorCritic(ReinforcementLearning):
             entropy_coefficient=entropy_coefficient,
             discount_factor=discount_factor,
         )
-        # TODO: inputs should be state_size + slate_size
         self.critic = TwinnedQValueEstimator(
             inputs=state_size + 1, learning_rate=learning_rate
         )
@@ -72,6 +76,10 @@ class SoftActorCritic(ReinforcementLearning):
             action = self.explore(state)
         return int(action)
 
+    def top_k_actions_for_state(self, state, k):
+        # TODO:
+        pass
+
     def store_experience(
         self, state: Any, action: Any, reward: float, done: bool, new_state: Any
     ):
@@ -102,6 +110,10 @@ class SoftActorCritic(ReinforcementLearning):
         self.learning_steps += 1
 
         if self.learning_steps % self.target_update_interval == 0:
+            # instead of updating the target network "the hard way", we use a Tau
+            # parameter as a weighting factor to update the weights as an
+            # exponential moving average. This is analogous to the target net update
+            # in the DQN algorithm.
             self.target_critic.soft_parameter_update(self.critic, update_rate=self.tau)
 
         # batch with indices and priority weights

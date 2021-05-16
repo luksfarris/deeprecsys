@@ -1,16 +1,16 @@
-from pydeeprecsys.rl.agents.reinforce import ReinforceAgent
+from pydeeprecsys.rl.agents.actor_critic import ActorCriticAgent
 from pydeeprecsys.rl.manager import CartpoleManager
 from pydeeprecsys.rl.learning_statistics import LearningStatistics
 
 
 def test_reinforce_init():
-    agent = ReinforceAgent(n_actions=2, state_size=4, discount_factor=0.95)
+    agent = ActorCriticAgent(n_actions=2, state_size=4, discount_factor=0.95)
     assert agent is not None
 
 
 def test_reinforce_interaction():
     manager = CartpoleManager()
-    agent = ReinforceAgent(
+    agent = ActorCriticAgent(
         n_actions=2, state_size=4, discount_factor=0.95, learning_rate=0.001
     )
     learning_statistics = LearningStatistics()

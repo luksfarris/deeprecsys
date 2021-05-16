@@ -26,7 +26,8 @@ class BaseNetwork(Module):
         using the parameters of the given source network. The update_rate is a float in
         range (0,1) and controls how the update affects the target (self). update_rate=0
         means a full deep copy, and update_rate=1 means the target does not update
-        at all."""
+        at all. This parameter is usually called Tau. This method is usually called
+        an exponential moving average update."""
         for t, s in zip(self.parameters(), source_network.parameters()):
             t.data.copy_(t.data * (1.0 - update_rate) + s.data * update_rate)
 

@@ -29,6 +29,18 @@
                 "--lf",
                 "-x"
             ]
+        },
+        {
+            "name": "Pytest file",
+            "type": "python",
+            "module": "pytest",
+            "cwd": "${workspaceFolder}/pydeeprecsys/",
+            "request": "launch",
+            "args": [
+                "--lf",
+                "-x",
+                "tests/unit/test_slate_training.py"
+            ]
         }
     ]
 }

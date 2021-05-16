@@ -31,10 +31,10 @@ class ValueEstimator(BaseNetwork):
         state_tensor = FloatTensor(state).to(device=self.device)
         return self.model(state_tensor)
 
-    def update(self, state: np.array, reward: float):
-        expected_reward = FloatTensor(np.array([reward])).to(device=self.device)
-        predicted_reward = self.predict(state)
+    def update(self, state: np.array, return_value: float):
+        expected_return = FloatTensor(np.array([return_value])).to(device=self.device)
+        predicted_return = self.predict(state)
         self.optimizer.zero_grad()
-        loss = self.loss_function(predicted_reward, expected_reward)
+        loss = self.loss_function(predicted_return, expected_return)
         loss.backward()
         self.optimizer.step()

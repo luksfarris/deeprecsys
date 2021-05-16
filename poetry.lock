@@ -140,6 +140,14 @@ six = ">=1.9.0"
 webencodings = "*"
 
 [[package]]
+name = "box2d-py"
+version = "2.3.8"
+description = "Python Box2D"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "build"
 version = "0.3.1.post1"
 description = "A simple, correct PEP517 package builder"
@@ -1901,7 +1909,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "3.6"
-content-hash = "42cf0be5dbcab564e31cf11c2ebf4f749b43b805dfdc724a4c62ba76ea78297d"
+content-hash = "166e3082be2339ff4fe67a8c3513d8f3c6cd1e399a3d144b31c2e785737d8698"
 
 [metadata.files]
 absl-py = [
@@ -1973,6 +1981,15 @@ black = [
 bleach = [
     {file = "bleach-3.3.0-py2.py3-none-any.whl", hash = "sha256:6123ddc1052673e52bab52cdc955bcb57a015264a1c57d37bea2f6b817af0125"},
     {file = "bleach-3.3.0.tar.gz", hash = "sha256:98b3170739e5e83dd9dc19633f074727ad848cbedb6026708c8ac2d3b697a433"},
+]
+box2d-py = [
+    {file = "box2d-py-2.3.8.tar.gz", hash = "sha256:bdacfbbc56079bb317548efe49d3d5a86646885cc27f4a2ee97e4b2960921ab7"},
+    {file = "box2d_py-2.3.8-cp35-cp35m-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:9525d8b3259800d6ae02da4bb2a1d398baca36e128e62014b25c50dcfb3beed4"},
+    {file = "box2d_py-2.3.8-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:4e4c23f454bcf26d2cedf2d46e5f0651ad4ed518f0d21e14f228cab001ddbcae"},
+    {file = "box2d_py-2.3.8-cp36-cp36m-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:d4c37540b7b105c47fedb9c635bc0c57920ad6b36479f34f5fd0f73a7376b379"},
+    {file = "box2d_py-2.3.8-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:6c99c75ac75bc9fa98b9914678bff47afddeea2320e7d9956f0859714a8ed579"},
+    {file = "box2d_py-2.3.8-cp37-cp37m-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:50cef0925b12d01013dcbe0055ae765b765711b21a324a3eb400ff705a5cc9f6"},
+    {file = "box2d_py-2.3.8-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:e1c1e6b038575ba25dfd95dd3725ceb8602d8376c1e8968a86383982a15cd634"},
 ]
 build = [
     {file = "build-0.3.1.post1-py2.py3-none-any.whl", hash = "sha256:88bc8ff6cb948247bebd5b3bf6b8b71d10fd93bce848f9d2fd9b28cbdd40ae8b"},

@@ -35,19 +35,20 @@ class PolicyEstimator(BaseNetwork):
     def action_probabilities(self, state: Any):
         return self.model(FloatTensor(state))
 
-    def predict(self, state: Any):
+    def predict(self, state: Any, k: int = 1) -> List[int]:
         probabilities = self.action_probabilities(state)
-        prediction = multinomial(probabilities, num_samples=1, replacement=False)
+        prediction = multinomial(probabilities, num_samples=k, replacement=False)
         if self.device == "cuda":
-            return prediction.detach().cpu().numpy()[0]
+            return prediction.detach().cpu().numpy()
         else:
-            return prediction.detach().numpy()[0]
+            return prediction.detach().numpy()
 
-    def update(self, state: Any, reward_baseline: Tensor, action: Any):
+    def update(self, state: np.array, reward_baseline: Tensor, action: np.array):
         state_tensor = FloatTensor(state).to(device=self.device)
         action_tensor = FloatTensor(np.array(action, dtype=np.float32)).to(
             device=self.device
         )
+        """ Update logic from the Policy Gradient theorem. """
         action_probabilities = self.model(state_tensor)
         action_distribution = Categorical(action_probabilities)
         selected_log_probabilities = action_distribution.log_prob(action_tensor)

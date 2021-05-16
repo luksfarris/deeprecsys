@@ -7,7 +7,6 @@ import highway_env  # noqa: F401
 import pydeeprecsys.movielens_fairness_env  # noqa: F401
 import pydeeprecsys.interest_evolution_env  # noqa: F401
 from pydeeprecsys.rl.agents.agent import ReinforcementLearning
-from pydeeprecsys.rl.agents.dqn import DQNAgent
 from pydeeprecsys.rl.learning_statistics import LearningStatistics
 
 
@@ -30,6 +29,7 @@ class Manager(object):
         env: Env = None,
         max_episode_steps: int = math.inf,
         reward_threshold: float = math.inf,
+        **kwargs,
     ):
         assert env_name is not None or env is not None
         if env_name is not None:
@@ -42,13 +42,15 @@ class Manager(object):
                 spec(self.env_name).reward_threshold or reward_threshold
             )
             # create the environment
-            self.env = make(env_name)
+            self.env = make(env_name, **kwargs)
             # we seed the environment so that results are reproducible
             self.env.seed(random_state)
         else:
             self.env = env
             self.max_episode_steps = max_episode_steps
             self.reward_threshold = reward_threshold
+
+        self.slate_size: int = kwargs["slate_size"] if "slate_size" in kwargs else 1
 
     def print_overview(self):
         """ Prints the most important variables of the environment. """
@@ -87,7 +89,7 @@ class Manager(object):
 
     def train(
         self,
-        rl: DQNAgent,
+        rl: ReinforcementLearning,
         statistics: Optional[LearningStatistics] = None,
         max_episodes=50,
         should_print: bool = True,
@@ -103,8 +105,13 @@ class Manager(object):
                 statistics.timestep = 0
             done = False
             while done is False:
-                action = rl.action_for_state(state)
-                new_state, reward, done, _ = self.env.step(action)
+                if self.slate_size == 1:
+                    action = rl.action_for_state(state)
+                else:
+                    action = rl.top_k_actions_for_state(state, k=self.slate_size)
+                new_state, reward, done, info = self.env.step(action)
+                if "chosen_action" in info:
+                    action = action[info["chosen_action"]]
                 rl.store_experience(
                     state, action, reward, done, new_state
                 )  # guardar experiencia en el buffer
@@ -120,8 +127,8 @@ class Manager(object):
                 statistics.append_metric("moving_rewards", moving_average)
             if should_print is True:
                 print(
-                    "\rEpisode {:d} Mean Rewards {:.2f} \t\t".format(
-                        episode, moving_average
+                    "\rEpisode {:d} Mean Rewards {:.2f} Last Reward {:.2f}\t\t".format(
+                        episode, moving_average, sum(rewards)
                     ),
                     end="",
                 )
@@ -172,9 +179,18 @@ class CartpoleManager(Manager):
         self.reward_threshold = 50
 
 
-class MovieLensFairnessManager(Manager):
+class LunarLanderManager(Manager):
     def __init__(self, random_state: int = 42):
-        super().__init__(env_name="MovieLensFairness-v0", random_state=random_state)
+        super().__init__(env_name="LunarLander-v2", random_state=random_state)
+
+
+class MovieLensFairnessManager(Manager):
+    def __init__(self, random_state: int = 42, slate_size: int = 1):
+        super().__init__(
+            env_name="MovieLensFairness-v0",
+            random_state=random_state,
+            slate_size=slate_size,
+        )
 
 
 class InterestEvolutionManager(Manager):

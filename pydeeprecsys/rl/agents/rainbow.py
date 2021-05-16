@@ -79,14 +79,17 @@ class RainbowDQNAgent(ReinforcementLearning):
                 # at every N steps replaces the target network with the main network
                 self.target_network.load_state_dict(self.network.state_dict())
 
-    def action_for_state(self, state: Any) -> Any:
+    def top_k_actions_for_state(self, state: Any, k: int = 1) -> Any:
         state_flat = state.flatten()
         if self.buffer.ready_to_predict():
-            action = self.target_network.best_action_for_state(state_flat)
+            actions = self.target_network.top_k_actions_for_state(state_flat, k=k)
         else:
-            action = self.random_state.choice(self.actions)
+            actions = self.random_state.choice(self.actions, size=k)
         self._check_update_network()
-        return action
+        return actions
+
+    def action_for_state(self, state: Any) -> Any:
+        return self.top_k_actions_for_state(state, k=1)[0]
 
     def store_experience(
         self, state: Any, action: Any, reward: float, done: bool, new_state: Any

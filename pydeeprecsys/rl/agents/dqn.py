@@ -13,6 +13,8 @@ from pydeeprecsys.rl.neural_networks.deep_q_network import (
 
 
 class DQNAgent(DecayingEpsilonGreedy):
+    """ TODO: This agent needs to be fixed"""
+
     def __init__(
         self,
         input_size: int,
@@ -68,6 +70,10 @@ class DQNAgent(DecayingEpsilonGreedy):
             action = self.explore()
         self._check_update_network()
         return action
+
+    def top_k_actions_for_state(self, state: Any, k: int = 1) -> Any:
+        # TODO:
+        pass
 
     def explore(self):
         return self.random_state.choice(self.actions)

@@ -9,6 +9,10 @@ class ReinforcementLearning(ABC):
         pass
 
     @abstractmethod
+    def top_k_actions_for_state(self, state: Any, k: int = 1) -> Any:
+        pass
+
+    @abstractmethod
     def store_experience(
         self, state: Any, action: Any, reward: float, done: bool, new_state: Any
     ):
@@ -27,6 +31,9 @@ class RandomAgent(ReinforcementLearning):
         self.action_space.seed(random_state)
 
     def action_for_state(self, state: Any) -> Any:
+        return self.action_space.sample()
+
+    def top_k_actions_for_state(self, state: Any, k: int = 1) -> Any:
         return self.action_space.sample()
 
     def store_experience(

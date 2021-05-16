@@ -22,7 +22,8 @@ class GaussianActor(BaseNetwork):
         discount_factor: float = 0.99,
     ):
         super().__init__()
-        layers = [inputs] + [inputs * 2, inputs * 2] + [outputs]
+        network_output = outputs * 2  # estimation of means and standard deviations
+        layers = [inputs] + [inputs * 2, inputs * 2] + [network_output]
         self.model = sequential_architecture(layers)
         self.optimizer = Adam(self.parameters(), lr=learning_rate)
         # TODO: implement entropy learning

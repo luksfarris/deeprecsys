@@ -31,7 +31,7 @@ class DuelingDDQN(BaseNetwork):
 
     def _build_network(self, n_input: int, n_output: int, noise_sigma: float):
         """Builds the dueling network with noisy layers, the value
-        subnet and the advantage subnet"""
+        subnet and the advantage subnet. TODO: add `.to_device()` to Modules"""
         self.fully_connected_1 = Linear(n_input, 256, bias=True)
         self.fully_connected_2 = NoisyLayer(256, 256, bias=True, sigma=noise_sigma)
         self.value_subnet = Sequential(
@@ -61,13 +61,16 @@ class DuelingDDQN(BaseNetwork):
             q_values = value_of_state + (advantage_of_state - advantage_of_state.mean())
         return q_values
 
-    def best_action_for_state(self, state: Any) -> Any:
+    def get_q_values(self, state: Any) -> Tensor:
         if type(state) is tuple:
             state = array([ravel(s) for s in state])
         state_tensor = FloatTensor(state).to(device=self.device)
-        q_values = self.forward(state_tensor)
-        best_action = q_values.max(-1)[1].item()
-        return best_action
+        return self.forward(state_tensor)
+
+    def top_k_actions_for_state(self, state: Any, k: int = 1) -> List[int]:
+        q_values = self.get_q_values(state)
+        _, top_indices = q_values.topk(k=k)
+        return [int(v) for v in top_indices.detach().numpy()]  # TODO: cpu() ?
 
     def learn_with(
         self, buffer: PrioritizedExperienceReplayBuffer, target_network: Module
@@ -111,7 +114,7 @@ class DuelingDDQN(BaseNetwork):
         # Then we get the predicted actions for the states that came next
         # (using the main network)
         actions_for_next_states = [
-            self.best_action_for_state(s) for s in next_state_tensors
+            self.top_k_actions_for_state(s)[0] for s in next_state_tensors
         ]
         actions_for_next_states_tensor = (
             LongTensor(actions_for_next_states).reshape(-1, 1).to(device=self.device)
