@@ -1,5 +1,5 @@
 from numpy.random import RandomState
-from typing import Any, Optional
+from typing import Any, Optional, List
 from numpy import arange
 from copy import deepcopy
 from pydeeprecsys.rl.neural_networks.dueling import DuelingDDQN
@@ -34,18 +34,20 @@ class RainbowDQNAgent(ReinforcementLearning):
         batch_size: int = 32,
         noise_sigma: float = 0.017,
         discount_factor: float = 0.99,
-        learning_rate: float = 0.99,
+        learning_rate: float = 0.0001,
+        hidden_layers: List[int] = None,
         random_state: RandomState = RandomState(),
         statistics: Optional[LearningStatistics] = None,
     ):
 
         self.network = DuelingDDQN(
-            input_size,
-            output_size,
-            learning_rate,
-            noise_sigma,
-            discount_factor,
+            n_input=input_size,
+            n_output=output_size,
+            learning_rate=learning_rate,
+            noise_sigma=noise_sigma,
+            discount_factor=discount_factor,
             statistics=statistics,
+            hidden_layers=hidden_layers,
         )
         self.target_network = deepcopy(self.network)
 

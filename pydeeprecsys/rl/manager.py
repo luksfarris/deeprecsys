@@ -142,9 +142,9 @@ class Manager(object):
         agent: type,
         params: dict,
         default_params: dict,
-        learning_statistics: LearningStatistics,
         episodes: int = 100,
         runs_per_combination: int = 3,
+        verbose: bool = True,
     ) -> dict:
         """Given an agent class, and a dictionary of hyperparameter names and values,
         will try all combinations, and return the mean reward of each combinatio
@@ -154,15 +154,27 @@ class Manager(object):
             if len(p_value) < 2:
                 continue
             for value in p_value:
-                rl = agent(**{p_name: value, **default_params})
+                rl = agent(**{**default_params, p_name: value})
+                learning_statistics = LearningStatistics()
                 combination_key = f"{p_name}={value}"
                 for run in range(runs_per_combination):
-                    print(f"Testing combination {p_name}={value} round {run}")
-                    self.train(rl=rl, max_episodes=episodes, should_print=False)
-                    combination_results[combination_key].append(
-                        learning_statistics.moving_rewards[-1]
+                    self.train(
+                        rl=rl,
+                        max_episodes=episodes,
+                        should_print=False,
+                        statistics=learning_statistics,
                     )
-                    print(f"result was {learning_statistics.moving_rewards[-1]}")
+                    combination_results[combination_key].append(
+                        learning_statistics.moving_rewards.iloc[-1]
+                    )
+                    if verbose:
+                        print(
+                            f"\rTested combination {p_name}={value} round {run} "
+                            f"result was {learning_statistics.moving_rewards.iloc[-1]}"
+                            "\t\t",
+                            end="",
+                        )
+
         return combination_results
 
 

@@ -1,5 +1,5 @@
 from pydeeprecsys.rl.agents.agent import ReinforcementLearning
-from typing import Any, List
+from typing import Any, List, Optional
 from pydeeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
 from pydeeprecsys.rl.experience_replay.buffer_parameters import (
     ExperienceReplayBufferParameters,
@@ -12,27 +12,34 @@ class ActorCriticAgent(ReinforcementLearning):
     """Policy estimator using a value estimator as a baseline.
     It's on-policy, for discrete action spaces, and episodic environments.
     This implementation uses stochastic policies.
-    TODO: could be a sub class of reinforces"""
+    TODO: could be a sub class of reinforce"""
 
     def __init__(
         self,
         n_actions: int,
         state_size: int,
         discount_factor: int = 0.99,
-        learning_rate=1e-3,
+        actor_hidden_layers: Optional[List[int]] = None,
+        critic_hidden_layers: Optional[List[int]] = None,
+        actor_learning_rate=1e-3,
+        critic_learning_rate=1e-3,
     ):
+        if not actor_hidden_layers:
+            actor_hidden_layers = [state_size * 2, state_size * 2]
+        if not critic_hidden_layers:
+            critic_hidden_layers = [state_size * 2, int(state_size / 2)]
         self.episode_count = 0
         self.value_estimator = ValueEstimator(
             state_size,
-            [state_size * 2, int(state_size / 2)],
+            critic_hidden_layers,
             1,
-            learning_rate=learning_rate,
+            learning_rate=critic_learning_rate,
         )
         self.policy_estimator = PolicyEstimator(
             state_size,
-            [state_size * 2, state_size * 2],
+            actor_hidden_layers,
             n_actions,
-            learning_rate=learning_rate,
+            learning_rate=actor_learning_rate,
         )
         self.discount_factor = discount_factor
         # starts the buffer
