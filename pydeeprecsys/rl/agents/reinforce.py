@@ -1,6 +1,6 @@
 import numpy as np
 from pydeeprecsys.rl.agents.agent import ReinforcementLearning
-from typing import Any, List
+from typing import Any, List, Optional
 from pydeeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
 from pydeeprecsys.rl.experience_replay.buffer_parameters import (
     ExperienceReplayBufferParameters,
@@ -17,14 +17,16 @@ class ReinforceAgent(ReinforcementLearning):
         self,
         n_actions: int,
         state_size: int,
+        hidden_layers: Optional[List[int]] = None,
         discount_factor: int = 0.99,  # a.k.a gamma
         learning_rate=1e-3,
     ):
         self.episode_count = 0
-
+        if not hidden_layers:
+            hidden_layers = [state_size * 2, state_size * 2]
         self.policy_estimator = PolicyEstimator(
             state_size,
-            [state_size * 2, state_size * 2],
+            hidden_layers,
             n_actions,
             learning_rate=learning_rate,
         )

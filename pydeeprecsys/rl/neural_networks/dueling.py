@@ -19,30 +19,37 @@ class DuelingDDQN(BaseNetwork):
         n_input: int,
         n_output: int,
         learning_rate: float,
+        hidden_layers: List[int] = None,
         noise_sigma: float = 0.17,
         discount_factor: float = 0.99,
         statistics: Optional[LearningStatistics] = None,
     ):
         super().__init__()
+        if not hidden_layers:
+            hidden_layers = [256, 256, 64, 64]
         self.discount_factor = discount_factor
-        self._build_network(n_input, n_output, noise_sigma)
+        self._build_network(n_input, n_output, noise_sigma, hidden_layers=hidden_layers)
         self.optimizer = Adam(self.parameters(), lr=learning_rate)
         self.statistics = statistics
 
-    def _build_network(self, n_input: int, n_output: int, noise_sigma: float):
+    def _build_network(
+        self, n_input: int, n_output: int, noise_sigma: float, hidden_layers: List[int]
+    ):
         """Builds the dueling network with noisy layers, the value
         subnet and the advantage subnet. TODO: add `.to_device()` to Modules"""
-        self.fully_connected_1 = Linear(n_input, 256, bias=True)
-        self.fully_connected_2 = NoisyLayer(256, 256, bias=True, sigma=noise_sigma)
+        assert len(hidden_layers) == 4
+        fc_1, fc_2, value_size, advantage_size = hidden_layers
+        self.fully_connected_1 = Linear(n_input, fc_1, bias=True)
+        self.fully_connected_2 = NoisyLayer(fc_1, fc_2, bias=True, sigma=noise_sigma)
         self.value_subnet = Sequential(
-            NoisyLayer(256, 64, bias=True, sigma=noise_sigma),
+            NoisyLayer(fc_2, value_size, bias=True, sigma=noise_sigma),
             ReLU(),
-            Linear(64, 1, bias=True),
+            Linear(value_size, 1, bias=True),
         )
         self.advantage_subnet = Sequential(
-            NoisyLayer(256, 64, bias=True, sigma=noise_sigma),
+            NoisyLayer(fc_2, advantage_size, bias=True, sigma=noise_sigma),
             ReLU(),
-            Linear(64, n_output, bias=True),
+            Linear(advantage_size, n_output, bias=True),
         )
 
     def forward(self, state):
