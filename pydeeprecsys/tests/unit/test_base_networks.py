@@ -1,5 +1,9 @@
+from pydeeprecsys.rl.agents.rainbow import RainbowDQNAgent
 from pydeeprecsys.rl.neural_networks.value_estimator import ValueEstimator
 import numpy as np
+from pydeeprecsys.movielens_fairness_env import MovieLensFairness  # noqa: F401
+from pydeeprecsys.rl.agents.reinforce import ReinforceAgent
+from pydeeprecsys.rl.agents.actor_critic import ActorCriticAgent
 
 
 def test_save_load(tmp_file_cleanup):
@@ -20,3 +24,18 @@ def test_save_load(tmp_file_cleanup):
     network.load(tmp_file_cleanup)
     # then the prediction is the same
     assert network.predict(inputs).detach().cpu().numpy()[0] == predicted_value
+
+
+def test_tensorboard_writer_reinforce():
+    env = MovieLensFairness(slate_size=1)
+    reinforce_agent = ReinforceAgent(
+        state_size=env.observation_space.shape[0], n_actions=env.action_space.n
+    )
+    reinforce_agent.policy_estimator.add_to_tensorboard(env.reset())
+    ac_agent = ActorCriticAgent(
+        state_size=env.observation_space.shape[0], n_actions=env.action_space.n
+    )
+    ac_agent.value_estimator.add_to_tensorboard(env.reset())
+    dqn_agent = RainbowDQNAgent(env.observation_space.shape[0], env.action_space.n)
+    dqn_agent.network.add_to_tensorboard(env.reset())
+    # if no errors were raised, we're good
