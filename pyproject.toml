@@ -33,6 +33,8 @@ rl-agents = {git = "https://github.com/eleurent/rl-agents"}
 highway-env = "^1.1"
 tqdm = "^4.60.0"
 box2d-py = "^2.3.8"
+tensorboardX = "^2.2"
+torchviz = "^0.0.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

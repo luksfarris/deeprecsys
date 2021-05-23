@@ -37,9 +37,7 @@
             "cwd": "${workspaceFolder}/pydeeprecsys/",
             "request": "launch",
             "args": [
-                "--lf",
-                "-x",
-                "tests/unit/test_slate_training.py"
+                "tests/unit/test_base_networks.py"
             ]
         }
     ]
