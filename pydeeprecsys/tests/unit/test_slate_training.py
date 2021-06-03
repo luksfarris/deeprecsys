@@ -1,5 +1,4 @@
 from pydeeprecsys.rl.manager import MovieLensFairnessManager
-from numpy.random import RandomState
 from pydeeprecsys.rl.agents.agent import RandomAgent
 from pydeeprecsys.rl.agents.reinforce import ReinforceAgent
 import pytest
@@ -7,9 +6,7 @@ import pytest
 
 @pytest.mark.parametrize("slate_size", [5, 10, 30])
 def test_slate_interaction(slate_size):
-    manager = MovieLensFairnessManager(
-        slate_size=slate_size, random_state=RandomState(42)
-    )
+    manager = MovieLensFairnessManager(slate_size=slate_size, seed=42)
     env = manager.env
     assert env.reset() is not None
     example_action = env.action_space.sample()
@@ -19,18 +16,14 @@ def test_slate_interaction(slate_size):
 
 @pytest.mark.parametrize("slate_size", [5, 10, 30])
 def test_slate_random_training(slate_size):
-    manager = MovieLensFairnessManager(
-        slate_size=slate_size, random_state=RandomState(42)
-    )
+    manager = MovieLensFairnessManager(slate_size=slate_size, seed=42)
     agent = RandomAgent(manager.env.action_space)
     manager.train(agent, max_episodes=30)
 
 
 @pytest.mark.parametrize("slate_size", [5, 10, 30])
 def test_slate_reinforce_training(slate_size):
-    manager = MovieLensFairnessManager(
-        slate_size=slate_size, random_state=RandomState(42)
-    )
+    manager = MovieLensFairnessManager(slate_size=slate_size, seed=42)
     agent = ReinforceAgent(
         int(manager.env.action_space.nvec[0]),
         manager.env.observation_space.shape[0],

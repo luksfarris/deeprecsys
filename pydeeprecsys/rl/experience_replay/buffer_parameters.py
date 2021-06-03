@@ -11,6 +11,8 @@ class ExperienceReplayBufferParameters:
         batch_size: int = 32,
         random_state: RandomState = RandomState(),
     ):
+        if minimum_experiences_to_start_predicting < batch_size:
+            raise ValueError("The batch size mus the larger than the burn in")
         self.max_experiences = max_experiences
         self.minimum_experiences_to_start_predicting = (
             minimum_experiences_to_start_predicting
