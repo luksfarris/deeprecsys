@@ -5,7 +5,6 @@ import math
 from numpy import mean
 import highway_env  # noqa: F401
 import pydeeprecsys.movielens_fairness_env  # noqa: F401
-import pydeeprecsys.interest_evolution_env  # noqa: F401
 from pydeeprecsys.rl.agents.agent import ReinforcementLearning
 from pydeeprecsys.rl.learning_statistics import LearningStatistics
 
@@ -202,9 +201,5 @@ class MovieLensFairnessManager(Manager):
             env_name="MovieLensFairness-v0",
             random_state=random_state,
             slate_size=slate_size,
+            max_episode_steps=50,
         )
-
-
-class InterestEvolutionManager(Manager):
-    def __init__(self, random_state: int = 42):
-        super().__init__(env_name="InterestEvolution-v0", random_state=random_state)

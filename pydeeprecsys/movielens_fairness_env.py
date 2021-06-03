@@ -15,7 +15,7 @@ import math
 _env_specs = {
     "id": "MovieLensFairness-v0",
     "entry_point": "pydeeprecsys.movielens_fairness_env:MovieLensFairness",
-    "max_episode_steps": 100,
+    "max_episode_steps": 50,
 }
 register(**_env_specs)
 
