@@ -6,4 +6,4 @@
 
 For instructions on setting up, check out the [Getting Started Wiki Page](https://github.com/luksfarris/pydeeprecsys/wiki/Getting-Started).
 
-This project is a WIP.
+This project is a WIP. It is provided "as is" under the MIT license.
