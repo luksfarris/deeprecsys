@@ -2,11 +2,13 @@ from gym import make, spec, Env
 from collections import namedtuple, defaultdict
 from typing import Any, List, Optional
 import math
-from numpy import mean
+from numpy.random import RandomState
+import numpy as np
 import highway_env  # noqa: F401
 import pydeeprecsys.movielens_fairness_env  # noqa: F401
 from pydeeprecsys.rl.agents.agent import ReinforcementLearning
 from pydeeprecsys.rl.learning_statistics import LearningStatistics
+import torch
 
 
 # An episode output is a data model to represent 3 things: how many timesteps the
@@ -23,14 +25,17 @@ class Manager(object):
 
     def __init__(
         self,
-        env_name: str = None,
-        random_state: int = 42,
-        env: Env = None,
+        env_name: Optional[str] = None,
+        seed: Optional[int] = None,
+        env: Optional[Env] = None,
         max_episode_steps: int = math.inf,
         reward_threshold: float = math.inf,
         **kwargs,
     ):
-        assert env_name is not None or env is not None
+        if any(
+            [env_name is None and env is None, env_name is not None and env is not None]
+        ):
+            raise ValueError("Must specify exactly one of [env_name, env]")
         if env_name is not None:
             self.env_name = env_name
             # extract some parameters from the environment
@@ -43,12 +48,12 @@ class Manager(object):
             # create the environment
             self.env = make(env_name, **kwargs)
             # we seed the environment so that results are reproducible
-            self.env.seed(random_state)
         else:
             self.env = env
             self.max_episode_steps = max_episode_steps
             self.reward_threshold = reward_threshold
 
+        self.setup_reproducibility(seed)
         self.slate_size: int = kwargs["slate_size"] if "slate_size" in kwargs else 1
 
     def print_overview(self):
@@ -119,7 +124,7 @@ class Manager(object):
                 if statistics:
                     statistics.timestep += 1
             episode_rewards.append(sum(rewards))
-            moving_average = mean(episode_rewards[-100:])
+            moving_average = np.mean(episode_rewards[-100:])
             if statistics:
                 statistics.append_metric("episode_rewards", sum(rewards))
                 statistics.append_metric("timestep_rewards", rewards)
@@ -176,30 +181,43 @@ class Manager(object):
 
         return combination_results
 
+    def setup_reproducibility(
+        self, seed: Optional[int] = None
+    ) -> Optional[RandomState]:
+        """ Seeds the project's libraries: numpy, torch, gym """
+        if seed:
+            # seed pytorch
+            torch.manual_seed(seed)
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+            # seed numpy
+            np.random.seed(seed)
+            # seed gym
+            self.env.seed(seed)
+            self.random_state = RandomState(seed)
+            return self.random_state
+
 
 class HighwayManager(Manager):
-    def __init__(self, random_state: int = 42, vehicles: int = 50):
-        super().__init__(env_name="highway-v0", random_state=random_state)
+    def __init__(self, seed: Optional[int] = None, vehicles: int = 50):
+        super().__init__(env_name="highway-v0", seed=seed)
         self.env.configure({"vehicles_count": vehicles})
         self.max_episode_steps = self.env.config["duration"]
 
 
 class CartpoleManager(Manager):
-    def __init__(self, random_state: int = 42):
-        super().__init__(env_name="CartPole-v0", random_state=random_state)
+    def __init__(self, seed: Optional[int] = None):
+        super().__init__(env_name="CartPole-v0", seed=seed)
         self.reward_threshold = 50
 
 
 class LunarLanderManager(Manager):
-    def __init__(self, random_state: int = 42):
-        super().__init__(env_name="LunarLander-v2", random_state=random_state)
+    def __init__(self, seed: Optional[int] = None):
+        super().__init__(env_name="LunarLander-v2", seed=seed)
 
 
 class MovieLensFairnessManager(Manager):
-    def __init__(self, random_state: int = 42, slate_size: int = 1):
+    def __init__(self, seed: Optional[int] = None, slate_size: int = 1):
         super().__init__(
-            env_name="MovieLensFairness-v0",
-            random_state=random_state,
-            slate_size=slate_size,
-            max_episode_steps=50,
+            env_name="MovieLensFairness-v0", seed=seed, slate_size=slate_size
         )

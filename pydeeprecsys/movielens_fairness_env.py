@@ -8,7 +8,7 @@ from recsim.simulator import recsim_gym
 from gym.envs.registration import register
 from gym.spaces import Box, Discrete
 from gym import Env
-from typing import List, Union
+from typing import List, Union, Optional
 import numpy as np
 import math
 
@@ -21,10 +21,12 @@ register(**_env_specs)
 
 
 class MovieLensFairness(Env):
-    def __init__(self, slate_size: int = 1, seed: int = 42):
+    """ MovieLens + MLFairnessGym + Recsim + Gym environment """
+
+    def __init__(self, slate_size: int = 1, seed: Optional[int] = None):
         self.slate_size = slate_size
         self.internal_env = self.prepare_environment()
-        self._rng = np.random.RandomState(seed)
+        self._rng = np.random.RandomState(seed=seed)
         self.ndcg = []
 
     def _get_product_relevance(self, product_id: int) -> float:
