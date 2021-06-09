@@ -26,6 +26,7 @@ class MovieLensFairness(Env):
         self.internal_env = self.prepare_environment()
         self._rng = np.random.RandomState(seed)
         self.ndcg = []
+        self.dcg = []
 
     def _get_product_relevance(self, product_id: int) -> float:
         """ Relevance in range (0,1) """
@@ -49,13 +50,15 @@ class MovieLensFairness(Env):
     def _calculate_ndcg(self, slate_product_ids: List[int]) -> float:
         relevances = [self._get_product_relevance(p) for p in slate_product_ids]
         dcg = self._get_dcg(relevances)
-        idcg = self._get_dcg(sorted(relevances, reverse=True))
-        return dcg / idcg
+        self.dcg.append(dcg)
+        ideal_relevances = [movie_lens.User.MAX_SCORE for _ in range(len(relevances))]
+        idcg = self._get_dcg(ideal_relevances)
+        self.ndcg.append(dcg / idcg)
 
     def step(self, action: Union[int, List[int]]):
         """ Normalize reward and flattens/normalizes state """
         if type(action) in [list, np.ndarray, np.array]:
-            self.ndcg.append(self._calculate_ndcg(action))
+            self._calculate_ndcg(action)
             state, reward, done, info = self.internal_env.step(action)
             encoded_state, info = self.movielens_state_encoder(state, action, info)
             return encoded_state, reward / 5, done, info
@@ -68,6 +71,7 @@ class MovieLensFairness(Env):
         """ flattens/normalizes state """
         state = self.internal_env.reset()
         self.ndcg = []
+        self.dcg = []
         encoded_state, _ = self.movielens_state_encoder(state, [], {})
         return encoded_state
 

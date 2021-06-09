@@ -37,4 +37,4 @@ def test_slate_reinforce_training(slate_size):
         discount_factor=0.95,
         learning_rate=0.0001,
     )
-    manager.train(agent, max_episodes=500)
+    manager.train(agent, max_episodes=200)
