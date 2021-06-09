@@ -2,9 +2,10 @@ from pydeeprecsys.rl.agents.rainbow import RainbowDQNAgent
 from pydeeprecsys.rl.manager import CartpoleManager
 from pydeeprecsys.rl.learning_statistics import LearningStatistics
 from numpy.random import RandomState
+from typing import Optional
 
 
-def _create_agent():
+def _create_agent(random_state: Optional[RandomState]) -> RainbowDQNAgent:
     return RainbowDQNAgent(
         4,
         2,
@@ -15,18 +16,18 @@ def _create_agent():
         discount_factor=0.95,
         buffer_size=10000,
         buffer_burn_in=32,
-        random_state=RandomState(42),
+        random_state=random_state,
     )
 
 
 def test_rainbow_init():
-    agent = _create_agent()
+    agent = _create_agent(None)
     assert agent is not None
 
 
 def test_reinforce_interaction():
-    manager = CartpoleManager()
-    agent = _create_agent()
+    manager = CartpoleManager(seed=42)
+    agent = _create_agent(manager.random_state)
     learning_statistics = LearningStatistics()
     manager.train(
         agent, statistics=learning_statistics, max_episodes=200, should_print=False
