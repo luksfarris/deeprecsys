@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>deeprecsys.rl.manager API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>deeprecsys.rl.manager</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">from gym import make, spec, Env
+from collections import namedtuple, defaultdict
+from typing import Any, List, Optional
+import math
+from numpy.random import RandomState
+import numpy as np
+import highway_env  # noqa: F401
+import deeprecsys.movielens_fairness_env  # noqa: F401
+from deeprecsys.rl.agents.agent import ReinforcementLearning
+from deeprecsys.rl.learning_statistics import LearningStatistics
+import torch
+
+
+# An episode output is a data model to represent 3 things: how many timesteps the
+# episode took to finish, the total sum of rewards, and the average reward sum of the
+# last 100 episodes.
+EpisodeOutput = namedtuple(&#34;EpisodeOutput&#34;, &#34;timesteps,reward_sum&#34;)
+
+
+class Manager(object):
+    &#34;&#34;&#34; Class for learning from gym environments with some convenience methods. &#34;&#34;&#34;
+
+    env_name: str
+    env: Any
+
+    def __init__(
+        self,
+        env_name: Optional[str] = None,
+        seed: Optional[int] = None,
+        env: Optional[Env] = None,
+        max_episode_steps: int = math.inf,
+        reward_threshold: float = math.inf,
+        **kwargs,
+    ):
+        if any(
+            [env_name is None and env is None, env_name is not None and env is not None]
+        ):
+            raise ValueError(&#34;Must specify exactly one of [env_name, env]&#34;)
+        if env_name is not None:
+            self.env_name = env_name
+            # extract some parameters from the environment
+            self.max_episode_steps = (
+                spec(self.env_name).max_episode_steps or max_episode_steps
+            )
+            self.reward_threshold = (
+                spec(self.env_name).reward_threshold or reward_threshold
+            )
+            # create the environment
+            self.env = make(env_name, **kwargs)
+            # we seed the environment so that results are reproducible
+        else:
+            self.env = env
+            self.max_episode_steps = max_episode_steps
+            self.reward_threshold = reward_threshold
+
+        self.setup_reproducibility(seed)
+        self.slate_size: int = kwargs[&#34;slate_size&#34;] if &#34;slate_size&#34; in kwargs else 1
+
+    def print_overview(self):
+        &#34;&#34;&#34; Prints the most important variables of the environment. &#34;&#34;&#34;
+        print(&#34;Reward threshold: {} &#34;.format(self.reward_threshold))
+        print(&#34;Reward signal range: {} &#34;.format(self.env.reward_range))
+        print(&#34;Maximum episode steps: {} &#34;.format(self.max_episode_steps))
+        print(&#34;Action apace size: {}&#34;.format(self.env.action_space))
+        print(&#34;Observation space size {} &#34;.format(self.env.observation_space))
+
+    def execute_episodes(
+        self,
+        rl: ReinforcementLearning,
+        n_episodes: int = 1,
+        should_render: bool = False,
+        should_print: bool = False,
+    ) -&gt; List[EpisodeOutput]:
+        &#34;&#34;&#34;Execute any number of episodes with the given agent.
+        Returns the number of timesteps and sum of rewards per episode.&#34;&#34;&#34;
+        episode_outputs = []
+        for episode in range(n_episodes):
+            t, reward_sum, done, state = 0, 0, False, self.env.reset()
+            if should_print:
+                print(f&#34;Running episode {episode}, starting at state {state}&#34;)
+            while not done and t &lt; self.max_episode_steps:
+                if should_render:
+                    self.env.render()
+                action = rl.action_for_state(state)
+                state, reward, done, _ = self.env.step(action)
+                if should_print:
+                    print(f&#34;t={t} a={action} r={reward} s={state}&#34;)
+                reward_sum += reward
+                t += 1
+            episode_outputs.append(EpisodeOutput(t, reward_sum))
+            self.env.close()
+        return episode_outputs
+
+    def train(
+        self,
+        rl: ReinforcementLearning,
+        statistics: Optional[LearningStatistics] = None,
+        max_episodes=50,
+        should_print: bool = True,
+    ):
+        if should_print is True:
+            print(&#34;Training...&#34;)
+        episode_rewards = []
+        for episode in range(max_episodes):
+            state = self.env.reset()
+            rewards = []
+            if statistics:
+                statistics.episode = episode
+                statistics.timestep = 0
+            done = False
+            while done is False:
+                if self.slate_size == 1:
+                    action = rl.action_for_state(state)
+                else:
+                    action = rl.top_k_actions_for_state(state, k=self.slate_size)
+                new_state, reward, done, info = self.env.step(action)
+                if &#34;chosen_action&#34; in info:
+                    action = action[info[&#34;chosen_action&#34;]]
+                rl.store_experience(
+                    state, action, reward, done, new_state
+                )  # guardar experiencia en el buffer
+                rewards.append(reward)
+                state = new_state.copy()
+                if statistics:
+                    statistics.timestep += 1
+            episode_rewards.append(sum(rewards))
+            moving_average = np.mean(episode_rewards[-100:])
+            if statistics:
+                statistics.append_metric(&#34;episode_rewards&#34;, sum(rewards))
+                statistics.append_metric(&#34;timestep_rewards&#34;, rewards)
+                statistics.append_metric(&#34;moving_rewards&#34;, moving_average)
+            if should_print is True:
+                print(
+                    &#34;\rEpisode {:d} Mean Rewards {:.2f} Last Reward {:.2f}\t\t&#34;.format(
+                        episode, moving_average, sum(rewards)
+                    ),
+                    end=&#34;&#34;,
+                )
+            if moving_average &gt;= self.reward_threshold:
+                if should_print is True:
+                    print(&#34;Reward threshold reached&#34;)
+                break
+
+    def hyperparameter_search(
+        self,
+        agent: type,
+        params: dict,
+        default_params: dict,
+        episodes: int = 100,
+        runs_per_combination: int = 3,
+        verbose: bool = True,
+    ) -&gt; dict:
+        &#34;&#34;&#34;Given an agent class, and a dictionary of hyperparameter names and values,
+        will try all combinations, and return the mean reward of each combinatio
+        for the given number of episods, and will run the determined number of times.&#34;&#34;&#34;
+        combination_results = defaultdict(lambda: [])
+        for (p_name, p_value) in params.items():
+            if len(p_value) &lt; 2:
+                continue
+            for value in p_value:
+                rl = agent(**{**default_params, p_name: value})
+                learning_statistics = LearningStatistics()
+                combination_key = f&#34;{p_name}={value}&#34;
+                for run in range(runs_per_combination):
+                    self.train(
+                        rl=rl,
+                        max_episodes=episodes,
+                        should_print=False,
+                        statistics=learning_statistics,
+                    )
+                    combination_results[combination_key].append(
+                        learning_statistics.moving_rewards.iloc[-1]
+                    )
+                    if verbose:
+                        print(
+                            f&#34;\rTested combination {p_name}={value} round {run} &#34;
+                            f&#34;result was {learning_statistics.moving_rewards.iloc[-1]}&#34;
+                            &#34;\t\t&#34;,
+                            end=&#34;&#34;,
+                        )
+
+        return combination_results
+
+    def setup_reproducibility(
+        self, seed: Optional[int] = None
+    ) -&gt; Optional[RandomState]:
+        &#34;&#34;&#34; Seeds the project&#39;s libraries: numpy, torch, gym &#34;&#34;&#34;
+        if seed:
+            # seed pytorch
+            torch.manual_seed(seed)
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+            # seed numpy
+            np.random.seed(seed)
+            # seed gym
+            self.env.seed(seed)
+            self.random_state = RandomState(seed)
+            return self.random_state
+
+
+class HighwayManager(Manager):
+    def __init__(self, seed: Optional[int] = None, vehicles: int = 50):
+        super().__init__(env_name=&#34;highway-v0&#34;, seed=seed)
+        self.env.configure({&#34;vehicles_count&#34;: vehicles})
+        self.max_episode_steps = self.env.config[&#34;duration&#34;]
+
+
+class CartpoleManager(Manager):
+    def __init__(self, seed: Optional[int] = None):
+        super().__init__(env_name=&#34;CartPole-v0&#34;, seed=seed)
+        self.reward_threshold = 50
+
+
+class LunarLanderManager(Manager):
+    def __init__(self, seed: Optional[int] = None):
+        super().__init__(env_name=&#34;LunarLander-v2&#34;, seed=seed)
+
+
+class MovieLensFairnessManager(Manager):
+    def __init__(self, seed: Optional[int] = None, slate_size: int = 1):
+        super().__init__(
+            env_name=&#34;MovieLensFairness-v0&#34;, seed=seed, slate_size=slate_size
+        )</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="deeprecsys.rl.manager.CartpoleManager"><code class="flex name class">
+<span>class <span class="ident">CartpoleManager</span></span>
+<span>(</span><span>seed: Union[int, NoneType] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Class for learning from gym environments with some convenience methods.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class CartpoleManager(Manager):
+    def __init__(self, seed: Optional[int] = None):
+        super().__init__(env_name=&#34;CartPole-v0&#34;, seed=seed)
+        self.reward_threshold = 50</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="deeprecsys.rl.manager.Manager" href="#deeprecsys.rl.manager.Manager">Manager</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="deeprecsys.rl.manager.CartpoleManager.env"><code class="name">var <span class="ident">env</span> : Any</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="deeprecsys.rl.manager.CartpoleManager.env_name"><code class="name">var <span class="ident">env_name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="deeprecsys.rl.manager.Manager" href="#deeprecsys.rl.manager.Manager">Manager</a></b></code>:
+<ul class="hlist">
+<li><code><a title="deeprecsys.rl.manager.Manager.execute_episodes" href="#deeprecsys.rl.manager.Manager.execute_episodes">execute_episodes</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.hyperparameter_search" href="#deeprecsys.rl.manager.Manager.hyperparameter_search">hyperparameter_search</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.print_overview" href="#deeprecsys.rl.manager.Manager.print_overview">print_overview</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.setup_reproducibility" href="#deeprecsys.rl.manager.Manager.setup_reproducibility">setup_reproducibility</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="deeprecsys.rl.manager.EpisodeOutput"><code class="flex name class">
+<span>class <span class="ident">EpisodeOutput</span></span>
+<span>(</span><span>timesteps, reward_sum)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>EpisodeOutput(timesteps, reward_sum)</p></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.tuple</li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="deeprecsys.rl.manager.EpisodeOutput.reward_sum"><code class="name">var <span class="ident">reward_sum</span></code></dt>
+<dd>
+<div class="desc"><p>Alias for field number 1</p></div>
+</dd>
+<dt id="deeprecsys.rl.manager.EpisodeOutput.timesteps"><code class="name">var <span class="ident">timesteps</span></code></dt>
+<dd>
+<div class="desc"><p>Alias for field number 0</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="deeprecsys.rl.manager.HighwayManager"><code class="flex name class">
+<span>class <span class="ident">HighwayManager</span></span>
+<span>(</span><span>seed: Union[int, NoneType] = None, vehicles: int = 50)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Class for learning from gym environments with some convenience methods.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class HighwayManager(Manager):
+    def __init__(self, seed: Optional[int] = None, vehicles: int = 50):
+        super().__init__(env_name=&#34;highway-v0&#34;, seed=seed)
+        self.env.configure({&#34;vehicles_count&#34;: vehicles})
+        self.max_episode_steps = self.env.config[&#34;duration&#34;]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="deeprecsys.rl.manager.Manager" href="#deeprecsys.rl.manager.Manager">Manager</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="deeprecsys.rl.manager.HighwayManager.env"><code class="name">var <span class="ident">env</span> : Any</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="deeprecsys.rl.manager.HighwayManager.env_name"><code class="name">var <span class="ident">env_name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="deeprecsys.rl.manager.Manager" href="#deeprecsys.rl.manager.Manager">Manager</a></b></code>:
+<ul class="hlist">
+<li><code><a title="deeprecsys.rl.manager.Manager.execute_episodes" href="#deeprecsys.rl.manager.Manager.execute_episodes">execute_episodes</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.hyperparameter_search" href="#deeprecsys.rl.manager.Manager.hyperparameter_search">hyperparameter_search</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.print_overview" href="#deeprecsys.rl.manager.Manager.print_overview">print_overview</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.setup_reproducibility" href="#deeprecsys.rl.manager.Manager.setup_reproducibility">setup_reproducibility</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="deeprecsys.rl.manager.LunarLanderManager"><code class="flex name class">
+<span>class <span class="ident">LunarLanderManager</span></span>
+<span>(</span><span>seed: Union[int, NoneType] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Class for learning from gym environments with some convenience methods.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LunarLanderManager(Manager):
+    def __init__(self, seed: Optional[int] = None):
+        super().__init__(env_name=&#34;LunarLander-v2&#34;, seed=seed)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="deeprecsys.rl.manager.Manager" href="#deeprecsys.rl.manager.Manager">Manager</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="deeprecsys.rl.manager.LunarLanderManager.env"><code class="name">var <span class="ident">env</span> : Any</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="deeprecsys.rl.manager.LunarLanderManager.env_name"><code class="name">var <span class="ident">env_name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="deeprecsys.rl.manager.Manager" href="#deeprecsys.rl.manager.Manager">Manager</a></b></code>:
+<ul class="hlist">
+<li><code><a title="deeprecsys.rl.manager.Manager.execute_episodes" href="#deeprecsys.rl.manager.Manager.execute_episodes">execute_episodes</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.hyperparameter_search" href="#deeprecsys.rl.manager.Manager.hyperparameter_search">hyperparameter_search</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.print_overview" href="#deeprecsys.rl.manager.Manager.print_overview">print_overview</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.setup_reproducibility" href="#deeprecsys.rl.manager.Manager.setup_reproducibility">setup_reproducibility</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="deeprecsys.rl.manager.Manager"><code class="flex name class">
+<span>class <span class="ident">Manager</span></span>
+<span>(</span><span>env_name: Union[str, NoneType] = None, seed: Union[int, NoneType] = None, env: Union[gym.core.Env, NoneType] = None, max_episode_steps: int = inf, reward_threshold: float = inf, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Class for learning from gym environments with some convenience methods.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Manager(object):
+    &#34;&#34;&#34; Class for learning from gym environments with some convenience methods. &#34;&#34;&#34;
+
+    env_name: str
+    env: Any
+
+    def __init__(
+        self,
+        env_name: Optional[str] = None,
+        seed: Optional[int] = None,
+        env: Optional[Env] = None,
+        max_episode_steps: int = math.inf,
+        reward_threshold: float = math.inf,
+        **kwargs,
+    ):
+        if any(
+            [env_name is None and env is None, env_name is not None and env is not None]
+        ):
+            raise ValueError(&#34;Must specify exactly one of [env_name, env]&#34;)
+        if env_name is not None:
+            self.env_name = env_name
+            # extract some parameters from the environment
+            self.max_episode_steps = (
+                spec(self.env_name).max_episode_steps or max_episode_steps
+            )
+            self.reward_threshold = (
+                spec(self.env_name).reward_threshold or reward_threshold
+            )
+            # create the environment
+            self.env = make(env_name, **kwargs)
+            # we seed the environment so that results are reproducible
+        else:
+            self.env = env
+            self.max_episode_steps = max_episode_steps
+            self.reward_threshold = reward_threshold
+
+        self.setup_reproducibility(seed)
+        self.slate_size: int = kwargs[&#34;slate_size&#34;] if &#34;slate_size&#34; in kwargs else 1
+
+    def print_overview(self):
+        &#34;&#34;&#34; Prints the most important variables of the environment. &#34;&#34;&#34;
+        print(&#34;Reward threshold: {} &#34;.format(self.reward_threshold))
+        print(&#34;Reward signal range: {} &#34;.format(self.env.reward_range))
+        print(&#34;Maximum episode steps: {} &#34;.format(self.max_episode_steps))
+        print(&#34;Action apace size: {}&#34;.format(self.env.action_space))
+        print(&#34;Observation space size {} &#34;.format(self.env.observation_space))
+
+    def execute_episodes(
+        self,
+        rl: ReinforcementLearning,
+        n_episodes: int = 1,
+        should_render: bool = False,
+        should_print: bool = False,
+    ) -&gt; List[EpisodeOutput]:
+        &#34;&#34;&#34;Execute any number of episodes with the given agent.
+        Returns the number of timesteps and sum of rewards per episode.&#34;&#34;&#34;
+        episode_outputs = []
+        for episode in range(n_episodes):
+            t, reward_sum, done, state = 0, 0, False, self.env.reset()
+            if should_print:
+                print(f&#34;Running episode {episode}, starting at state {state}&#34;)
+            while not done and t &lt; self.max_episode_steps:
+                if should_render:
+                    self.env.render()
+                action = rl.action_for_state(state)
+                state, reward, done, _ = self.env.step(action)
+                if should_print:
+                    print(f&#34;t={t} a={action} r={reward} s={state}&#34;)
+                reward_sum += reward
+                t += 1
+            episode_outputs.append(EpisodeOutput(t, reward_sum))
+            self.env.close()
+        return episode_outputs
+
+    def train(
+        self,
+        rl: ReinforcementLearning,
+        statistics: Optional[LearningStatistics] = None,
+        max_episodes=50,
+        should_print: bool = True,
+    ):
+        if should_print is True:
+            print(&#34;Training...&#34;)
+        episode_rewards = []
+        for episode in range(max_episodes):
+            state = self.env.reset()
+            rewards = []
+            if statistics:
+                statistics.episode = episode
+                statistics.timestep = 0
+            done = False
+            while done is False:
+                if self.slate_size == 1:
+                    action = rl.action_for_state(state)
+                else:
+                    action = rl.top_k_actions_for_state(state, k=self.slate_size)
+                new_state, reward, done, info = self.env.step(action)
+                if &#34;chosen_action&#34; in info:
+                    action = action[info[&#34;chosen_action&#34;]]
+                rl.store_experience(
+                    state, action, reward, done, new_state
+                )  # guardar experiencia en el buffer
+                rewards.append(reward)
+                state = new_state.copy()
+                if statistics:
+                    statistics.timestep += 1
+            episode_rewards.append(sum(rewards))
+            moving_average = np.mean(episode_rewards[-100:])
+            if statistics:
+                statistics.append_metric(&#34;episode_rewards&#34;, sum(rewards))
+                statistics.append_metric(&#34;timestep_rewards&#34;, rewards)
+                statistics.append_metric(&#34;moving_rewards&#34;, moving_average)
+            if should_print is True:
+                print(
+                    &#34;\rEpisode {:d} Mean Rewards {:.2f} Last Reward {:.2f}\t\t&#34;.format(
+                        episode, moving_average, sum(rewards)
+                    ),
+                    end=&#34;&#34;,
+                )
+            if moving_average &gt;= self.reward_threshold:
+                if should_print is True:
+                    print(&#34;Reward threshold reached&#34;)
+                break
+
+    def hyperparameter_search(
+        self,
+        agent: type,
+        params: dict,
+        default_params: dict,
+        episodes: int = 100,
+        runs_per_combination: int = 3,
+        verbose: bool = True,
+    ) -&gt; dict:
+        &#34;&#34;&#34;Given an agent class, and a dictionary of hyperparameter names and values,
+        will try all combinations, and return the mean reward of each combinatio
+        for the given number of episods, and will run the determined number of times.&#34;&#34;&#34;
+        combination_results = defaultdict(lambda: [])
+        for (p_name, p_value) in params.items():
+            if len(p_value) &lt; 2:
+                continue
+            for value in p_value:
+                rl = agent(**{**default_params, p_name: value})
+                learning_statistics = LearningStatistics()
+                combination_key = f&#34;{p_name}={value}&#34;
+                for run in range(runs_per_combination):
+                    self.train(
+                        rl=rl,
+                        max_episodes=episodes,
+                        should_print=False,
+                        statistics=learning_statistics,
+                    )
+                    combination_results[combination_key].append(
+                        learning_statistics.moving_rewards.iloc[-1]
+                    )
+                    if verbose:
+                        print(
+                            f&#34;\rTested combination {p_name}={value} round {run} &#34;
+                            f&#34;result was {learning_statistics.moving_rewards.iloc[-1]}&#34;
+                            &#34;\t\t&#34;,
+                            end=&#34;&#34;,
+                        )
+
+        return combination_results
+
+    def setup_reproducibility(
+        self, seed: Optional[int] = None
+    ) -&gt; Optional[RandomState]:
+        &#34;&#34;&#34; Seeds the project&#39;s libraries: numpy, torch, gym &#34;&#34;&#34;
+        if seed:
+            # seed pytorch
+            torch.manual_seed(seed)
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+            # seed numpy
+            np.random.seed(seed)
+            # seed gym
+            self.env.seed(seed)
+            self.random_state = RandomState(seed)
+            return self.random_state</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="deeprecsys.rl.manager.CartpoleManager" href="#deeprecsys.rl.manager.CartpoleManager">CartpoleManager</a></li>
+<li><a title="deeprecsys.rl.manager.HighwayManager" href="#deeprecsys.rl.manager.HighwayManager">HighwayManager</a></li>
+<li><a title="deeprecsys.rl.manager.LunarLanderManager" href="#deeprecsys.rl.manager.LunarLanderManager">LunarLanderManager</a></li>
+<li><a title="deeprecsys.rl.manager.MovieLensFairnessManager" href="#deeprecsys.rl.manager.MovieLensFairnessManager">MovieLensFairnessManager</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="deeprecsys.rl.manager.Manager.env"><code class="name">var <span class="ident">env</span> : Any</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="deeprecsys.rl.manager.Manager.env_name"><code class="name">var <span class="ident">env_name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="deeprecsys.rl.manager.Manager.execute_episodes"><code class="name flex">
+<span>def <span class="ident">execute_episodes</span></span>(<span>self, rl: <a title="deeprecsys.rl.agents.agent.ReinforcementLearning" href="agents/agent.html#deeprecsys.rl.agents.agent.ReinforcementLearning">ReinforcementLearning</a>, n_episodes: int = 1, should_render: bool = False, should_print: bool = False) ‑> List[<a title="deeprecsys.rl.manager.EpisodeOutput" href="#deeprecsys.rl.manager.EpisodeOutput">EpisodeOutput</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Execute any number of episodes with the given agent.
+Returns the number of timesteps and sum of rewards per episode.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def execute_episodes(
+    self,
+    rl: ReinforcementLearning,
+    n_episodes: int = 1,
+    should_render: bool = False,
+    should_print: bool = False,
+) -&gt; List[EpisodeOutput]:
+    &#34;&#34;&#34;Execute any number of episodes with the given agent.
+    Returns the number of timesteps and sum of rewards per episode.&#34;&#34;&#34;
+    episode_outputs = []
+    for episode in range(n_episodes):
+        t, reward_sum, done, state = 0, 0, False, self.env.reset()
+        if should_print:
+            print(f&#34;Running episode {episode}, starting at state {state}&#34;)
+        while not done and t &lt; self.max_episode_steps:
+            if should_render:
+                self.env.render()
+            action = rl.action_for_state(state)
+            state, reward, done, _ = self.env.step(action)
+            if should_print:
+                print(f&#34;t={t} a={action} r={reward} s={state}&#34;)
+            reward_sum += reward
+            t += 1
+        episode_outputs.append(EpisodeOutput(t, reward_sum))
+        self.env.close()
+    return episode_outputs</code></pre>
+</details>
+</dd>
+<dt id="deeprecsys.rl.manager.Manager.hyperparameter_search"><code class="name flex">
+<span>def <span class="ident">hyperparameter_search</span></span>(<span>self, agent: type, params: dict, default_params: dict, episodes: int = 100, runs_per_combination: int = 3, verbose: bool = True) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Given an agent class, and a dictionary of hyperparameter names and values,
+will try all combinations, and return the mean reward of each combinatio
+for the given number of episods, and will run the determined number of times.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def hyperparameter_search(
+    self,
+    agent: type,
+    params: dict,
+    default_params: dict,
+    episodes: int = 100,
+    runs_per_combination: int = 3,
+    verbose: bool = True,
+) -&gt; dict:
+    &#34;&#34;&#34;Given an agent class, and a dictionary of hyperparameter names and values,
+    will try all combinations, and return the mean reward of each combinatio
+    for the given number of episods, and will run the determined number of times.&#34;&#34;&#34;
+    combination_results = defaultdict(lambda: [])
+    for (p_name, p_value) in params.items():
+        if len(p_value) &lt; 2:
+            continue
+        for value in p_value:
+            rl = agent(**{**default_params, p_name: value})
+            learning_statistics = LearningStatistics()
+            combination_key = f&#34;{p_name}={value}&#34;
+            for run in range(runs_per_combination):
+                self.train(
+                    rl=rl,
+                    max_episodes=episodes,
+                    should_print=False,
+                    statistics=learning_statistics,
+                )
+                combination_results[combination_key].append(
+                    learning_statistics.moving_rewards.iloc[-1]
+                )
+                if verbose:
+                    print(
+                        f&#34;\rTested combination {p_name}={value} round {run} &#34;
+                        f&#34;result was {learning_statistics.moving_rewards.iloc[-1]}&#34;
+                        &#34;\t\t&#34;,
+                        end=&#34;&#34;,
+                    )
+
+    return combination_results</code></pre>
+</details>
+</dd>
+<dt id="deeprecsys.rl.manager.Manager.print_overview"><code class="name flex">
+<span>def <span class="ident">print_overview</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Prints the most important variables of the environment.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def print_overview(self):
+    &#34;&#34;&#34; Prints the most important variables of the environment. &#34;&#34;&#34;
+    print(&#34;Reward threshold: {} &#34;.format(self.reward_threshold))
+    print(&#34;Reward signal range: {} &#34;.format(self.env.reward_range))
+    print(&#34;Maximum episode steps: {} &#34;.format(self.max_episode_steps))
+    print(&#34;Action apace size: {}&#34;.format(self.env.action_space))
+    print(&#34;Observation space size {} &#34;.format(self.env.observation_space))</code></pre>
+</details>
+</dd>
+<dt id="deeprecsys.rl.manager.Manager.setup_reproducibility"><code class="name flex">
+<span>def <span class="ident">setup_reproducibility</span></span>(<span>self, seed: Union[int, NoneType] = None) ‑> Union[numpy.random.mtrand.RandomState, NoneType]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Seeds the project's libraries: numpy, torch, gym</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def setup_reproducibility(
+    self, seed: Optional[int] = None
+) -&gt; Optional[RandomState]:
+    &#34;&#34;&#34; Seeds the project&#39;s libraries: numpy, torch, gym &#34;&#34;&#34;
+    if seed:
+        # seed pytorch
+        torch.manual_seed(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        # seed numpy
+        np.random.seed(seed)
+        # seed gym
+        self.env.seed(seed)
+        self.random_state = RandomState(seed)
+        return self.random_state</code></pre>
+</details>
+</dd>
+<dt id="deeprecsys.rl.manager.Manager.train"><code class="name flex">
+<span>def <span class="ident">train</span></span>(<span>self, rl: <a title="deeprecsys.rl.agents.agent.ReinforcementLearning" href="agents/agent.html#deeprecsys.rl.agents.agent.ReinforcementLearning">ReinforcementLearning</a>, statistics: Union[<a title="deeprecsys.rl.learning_statistics.LearningStatistics" href="learning_statistics.html#deeprecsys.rl.learning_statistics.LearningStatistics">LearningStatistics</a>, NoneType] = None, max_episodes=50, should_print: bool = True)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def train(
+    self,
+    rl: ReinforcementLearning,
+    statistics: Optional[LearningStatistics] = None,
+    max_episodes=50,
+    should_print: bool = True,
+):
+    if should_print is True:
+        print(&#34;Training...&#34;)
+    episode_rewards = []
+    for episode in range(max_episodes):
+        state = self.env.reset()
+        rewards = []
+        if statistics:
+            statistics.episode = episode
+            statistics.timestep = 0
+        done = False
+        while done is False:
+            if self.slate_size == 1:
+                action = rl.action_for_state(state)
+            else:
+                action = rl.top_k_actions_for_state(state, k=self.slate_size)
+            new_state, reward, done, info = self.env.step(action)
+            if &#34;chosen_action&#34; in info:
+                action = action[info[&#34;chosen_action&#34;]]
+            rl.store_experience(
+                state, action, reward, done, new_state
+            )  # guardar experiencia en el buffer
+            rewards.append(reward)
+            state = new_state.copy()
+            if statistics:
+                statistics.timestep += 1
+        episode_rewards.append(sum(rewards))
+        moving_average = np.mean(episode_rewards[-100:])
+        if statistics:
+            statistics.append_metric(&#34;episode_rewards&#34;, sum(rewards))
+            statistics.append_metric(&#34;timestep_rewards&#34;, rewards)
+            statistics.append_metric(&#34;moving_rewards&#34;, moving_average)
+        if should_print is True:
+            print(
+                &#34;\rEpisode {:d} Mean Rewards {:.2f} Last Reward {:.2f}\t\t&#34;.format(
+                    episode, moving_average, sum(rewards)
+                ),
+                end=&#34;&#34;,
+            )
+        if moving_average &gt;= self.reward_threshold:
+            if should_print is True:
+                print(&#34;Reward threshold reached&#34;)
+            break</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="deeprecsys.rl.manager.MovieLensFairnessManager"><code class="flex name class">
+<span>class <span class="ident">MovieLensFairnessManager</span></span>
+<span>(</span><span>seed: Union[int, NoneType] = None, slate_size: int = 1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Class for learning from gym environments with some convenience methods.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MovieLensFairnessManager(Manager):
+    def __init__(self, seed: Optional[int] = None, slate_size: int = 1):
+        super().__init__(
+            env_name=&#34;MovieLensFairness-v0&#34;, seed=seed, slate_size=slate_size
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="deeprecsys.rl.manager.Manager" href="#deeprecsys.rl.manager.Manager">Manager</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="deeprecsys.rl.manager.MovieLensFairnessManager.env"><code class="name">var <span class="ident">env</span> : Any</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="deeprecsys.rl.manager.MovieLensFairnessManager.env_name"><code class="name">var <span class="ident">env_name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="deeprecsys.rl.manager.Manager" href="#deeprecsys.rl.manager.Manager">Manager</a></b></code>:
+<ul class="hlist">
+<li><code><a title="deeprecsys.rl.manager.Manager.execute_episodes" href="#deeprecsys.rl.manager.Manager.execute_episodes">execute_episodes</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.hyperparameter_search" href="#deeprecsys.rl.manager.Manager.hyperparameter_search">hyperparameter_search</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.print_overview" href="#deeprecsys.rl.manager.Manager.print_overview">print_overview</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.setup_reproducibility" href="#deeprecsys.rl.manager.Manager.setup_reproducibility">setup_reproducibility</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="deeprecsys.rl" href="index.html">deeprecsys.rl</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="deeprecsys.rl.manager.CartpoleManager" href="#deeprecsys.rl.manager.CartpoleManager">CartpoleManager</a></code></h4>
+<ul class="">
+<li><code><a title="deeprecsys.rl.manager.CartpoleManager.env" href="#deeprecsys.rl.manager.CartpoleManager.env">env</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.CartpoleManager.env_name" href="#deeprecsys.rl.manager.CartpoleManager.env_name">env_name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="deeprecsys.rl.manager.EpisodeOutput" href="#deeprecsys.rl.manager.EpisodeOutput">EpisodeOutput</a></code></h4>
+<ul class="">
+<li><code><a title="deeprecsys.rl.manager.EpisodeOutput.reward_sum" href="#deeprecsys.rl.manager.EpisodeOutput.reward_sum">reward_sum</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.EpisodeOutput.timesteps" href="#deeprecsys.rl.manager.EpisodeOutput.timesteps">timesteps</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="deeprecsys.rl.manager.HighwayManager" href="#deeprecsys.rl.manager.HighwayManager">HighwayManager</a></code></h4>
+<ul class="">
+<li><code><a title="deeprecsys.rl.manager.HighwayManager.env" href="#deeprecsys.rl.manager.HighwayManager.env">env</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.HighwayManager.env_name" href="#deeprecsys.rl.manager.HighwayManager.env_name">env_name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="deeprecsys.rl.manager.LunarLanderManager" href="#deeprecsys.rl.manager.LunarLanderManager">LunarLanderManager</a></code></h4>
+<ul class="">
+<li><code><a title="deeprecsys.rl.manager.LunarLanderManager.env" href="#deeprecsys.rl.manager.LunarLanderManager.env">env</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.LunarLanderManager.env_name" href="#deeprecsys.rl.manager.LunarLanderManager.env_name">env_name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="deeprecsys.rl.manager.Manager" href="#deeprecsys.rl.manager.Manager">Manager</a></code></h4>
+<ul class="">
+<li><code><a title="deeprecsys.rl.manager.Manager.env" href="#deeprecsys.rl.manager.Manager.env">env</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.env_name" href="#deeprecsys.rl.manager.Manager.env_name">env_name</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.execute_episodes" href="#deeprecsys.rl.manager.Manager.execute_episodes">execute_episodes</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.hyperparameter_search" href="#deeprecsys.rl.manager.Manager.hyperparameter_search">hyperparameter_search</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.print_overview" href="#deeprecsys.rl.manager.Manager.print_overview">print_overview</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.setup_reproducibility" href="#deeprecsys.rl.manager.Manager.setup_reproducibility">setup_reproducibility</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.Manager.train" href="#deeprecsys.rl.manager.Manager.train">train</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="deeprecsys.rl.manager.MovieLensFairnessManager" href="#deeprecsys.rl.manager.MovieLensFairnessManager">MovieLensFairnessManager</a></code></h4>
+<ul class="">
+<li><code><a title="deeprecsys.rl.manager.MovieLensFairnessManager.env" href="#deeprecsys.rl.manager.MovieLensFairnessManager.env">env</a></code></li>
+<li><code><a title="deeprecsys.rl.manager.MovieLensFairnessManager.env_name" href="#deeprecsys.rl.manager.MovieLensFairnessManager.env_name">env_name</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

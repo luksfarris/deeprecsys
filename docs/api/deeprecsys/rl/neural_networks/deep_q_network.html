@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>deeprecsys.rl.neural_networks.deep_q_network API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>deeprecsys.rl.neural_networks.deep_q_network</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">from torch import FloatTensor, max, LongTensor, BoolTensor, gather, Tensor
+from numpy import array, ravel
+from torch.nn import Sequential, Linear, ReLU, MSELoss, Module
+from torch.optim import Adam
+from typing import List, Any, Tuple, Optional
+from deeprecsys.rl.learning_statistics import LearningStatistics
+from deeprecsys.rl.neural_networks.base_network import BaseNetwork
+
+
+def sequential_architecture(layers: List[int], bias: bool = True) -&gt; Module:
+    &#34;&#34;&#34; Fully connected layers, with bias, and ReLU activation&#34;&#34;&#34;
+    architecture = []
+    for i in range(len(layers) - 2):
+        architecture.append(Linear(layers[i], layers[i + 1], bias=bias))
+        architecture.append(ReLU())
+    architecture.append(Linear(layers[-2], layers[-1], bias=bias))
+    return Sequential(*architecture)
+
+
+class DeepQNetwork(BaseNetwork):
+    &#34;&#34;&#34;Implementation of a Deep Q Network with a Sequential arquitecture. Layers are
+    supposed to be provided as a list of torch modules.&#34;&#34;&#34;
+
+    def __init__(
+        self,
+        learning_rate: float,
+        architecture: Module,
+        discount_factor: float = 0.99,
+        statistics: Optional[LearningStatistics] = None,
+    ):
+        super().__init__()
+        self.model = architecture
+        self.discount_factor = discount_factor
+        self.statistics = statistics
+        self.optimizer = Adam(self.parameters(), lr=learning_rate)
+        if self.device == &#34;cuda&#34;:
+            self.model.cuda()
+
+    def best_action_for_state(self, state: Any) -&gt; Any:
+        if type(state) is tuple:
+            state = array([ravel(s) for s in state])
+        state_tensor = FloatTensor(state).to(device=self.device)
+        q_values = self.model(state_tensor)
+        best_action = max(q_values, dim=-1)[1].item()
+        return best_action
+
+    def learn_from(self, experiences: List[Tuple]):
+        self.optimizer.zero_grad()
+        loss = self._calculate_loss(experiences)
+        loss.backward()
+        self.optimizer.step()
+        # store loss in statistics
+        if self.statistics:
+            if self.device == &#34;cuda&#34;:
+                self.statistics.append_metric(&#34;loss&#34;, loss.detach().cpu().numpy())
+            else:
+                self.statistics.append_metric(&#34;loss&#34;, loss.detach().numpy())
+
+    def _calculate_loss(self, experiences: List[Tuple]) -&gt; Tensor:
+        states, actions, rewards, dones, next_states = [i for i in experiences]
+        state_tensors = FloatTensor(states).to(device=self.device)
+        next_state_tensors = FloatTensor(next_states).to(device=self.device)
+        reward_tensors = FloatTensor(rewards).to(device=self.device).reshape(-1, 1)
+        action_tensors = (
+            LongTensor(array(actions)).reshape(-1, 1).to(device=self.device)
+        )
+        done_tensors = BoolTensor(dones).to(device=self.device)
+        actions_for_states = self.model(state_tensors)
+        q_vals = gather(actions_for_states, 1, action_tensors)
+        next_actions = [self.best_action_for_state(s) for s in next_states]
+        next_action_tensors = (
+            LongTensor(next_actions).reshape(-1, 1).to(device=self.device)
+        )
+        q_vals_next = gather(self.model(next_state_tensors), 1, next_action_tensors)
+        q_vals_next[done_tensors] = 0
+        expected_q_vals = self.discount_factor * q_vals_next + reward_tensors
+        return MSELoss()(q_vals, expected_q_vals.reshape(-1, 1))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="deeprecsys.rl.neural_networks.deep_q_network.gather"><code class="name flex">
+<span>def <span class="ident">gather</span></span>(<span>input, dim, index, out=None, sparse_grad=False) ‑> torch.Tensor</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gathers values along an axis specified by <code>dim</code>.</p>
+<p>For a 3-D tensor the output is specified by::</p>
+<pre><code>out[i][j][k] = input[index[i][j][k]][j][k]  # if dim == 0
+out[i][j][k] = input[i][index[i][j][k]][k]  # if dim == 1
+out[i][j][k] = input[i][j][index[i][j][k]]  # if dim == 2
+</code></pre>
+<p>If :attr:<code>input</code> is an n-dimensional tensor with size
+:math:<code>(x_0, x_1..., x_{i-1}, x_i, x_{i+1}, ..., x_{n-1})</code>
+and <code>dim = i</code>, then :attr:<code>index</code> must be an :math:<code>n</code>-dimensional tensor with
+size :math:<code>(x_0, x_1, ..., x_{i-1}, y, x_{i+1}, ..., x_{n-1})</code> where :math:<code>y \geq 1</code>
+and :attr:<code>out</code> will have the same size as :attr:<code>index</code>.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>input</code></strong> :&ensp;<code>Tensor</code></dt>
+<dd>the source tensor</dd>
+<dt><strong><code>dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>the axis along which to index</dd>
+<dt><strong><code>index</code></strong> :&ensp;<code>LongTensor</code></dt>
+<dd>the indices of elements to gather</dd>
+<dt><strong><code>out</code></strong> :&ensp;<code>Tensor</code>, optional</dt>
+<dd>the destination tensor</dd>
+</dl>
+<p>sparse_grad(bool,optional): If <code>True</code>, gradient w.r.t. :attr:<code>input</code> will be a sparse tensor.
+Example::</p>
+<pre><code>&gt;&gt;&gt; t = torch.tensor([[1,2],[3,4]])
+&gt;&gt;&gt; torch.gather(t, 1, torch.tensor([[0,0],[1,0]]))
+tensor([[ 1,  1],
+        [ 4,  3]])
+</code></pre></div>
+</dd>
+<dt id="deeprecsys.rl.neural_networks.deep_q_network.max"><code class="name flex">
+<span>def <span class="ident">max</span></span>(<span>...)</span>
+</code></dt>
+<dd>
+<div class="desc"><div class="admonition function">
+<p class="admonition-title">Function:&ensp;max(input) -&gt; Tensor</p>
+</div>
+<p>Returns the maximum value of all elements in the :attr:<code>input</code> tensor.</p>
+<h2 id="args">Args</h2>
+<p>{input}
+Example::</p>
+<pre><code>&gt;&gt;&gt; a = torch.randn(1, 3)
+&gt;&gt;&gt; a
+tensor([[ 0.6763,  0.7445, -2.2369]])
+&gt;&gt;&gt; torch.max(a)
+tensor(0.7445)
+</code></pre>
+<div class="admonition function">
+<p class="admonition-title">Function:&ensp;max(input, dim, keepdim=False, out=None) -&gt; (Tensor, LongTensor)</p>
+</div>
+<p>Returns a namedtuple <code>(values, indices)</code> where <code>values</code> is the maximum
+value of each row of the :attr:<code>input</code> tensor in the given dimension
+:attr:<code>dim</code>. And <code>indices</code> is the index location of each maximum value found
+(argmax).</p>
+<p>If :attr:<code>keepdim</code> is <code>True</code>, the output tensors are of the same size
+as :attr:<code>input</code> except in the dimension :attr:<code>dim</code> where they are of size 1.
+Otherwise, :attr:<code>dim</code> is squeezed (see :func:<code>torch.squeeze</code>), resulting
+in the output tensors having 1 fewer dimension than :attr:<code>input</code>.</p>
+<h2 id="args_1">Args</h2>
+<dl>
+<dt>{input}</dt>
+<dt>{dim}</dt>
+<dt>{keepdim} Default: <code>False</code>.</dt>
+<dt><strong><code>out</code></strong> :&ensp;<code>tuple</code>, optional</dt>
+<dd>the result tuple of two output tensors (max, max_indices)</dd>
+</dl>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; a = torch.randn(4, 4)
+&gt;&gt;&gt; a
+tensor([[-1.2360, -0.2942, -0.1222,  0.8475],
+        [ 1.1949, -1.1127, -2.2379, -0.6702],
+        [ 1.5717, -0.9207,  0.1297, -1.8768],
+        [-0.6172,  1.0036, -0.6060, -0.2432]])
+&gt;&gt;&gt; torch.max(a, 1)
+torch.return_types.max(values=tensor([0.8475, 1.1949, 1.5717, 1.0036]), indices=tensor([3, 0, 0, 1]))
+</code></pre>
+<div class="admonition function">
+<p class="admonition-title">Function:&ensp;max(input, other, out=None) -&gt; Tensor</p>
+</div>
+<p>Each element of the tensor :attr:<code>input</code> is compared with the corresponding
+element of the tensor :attr:<code>other</code> and an element-wise maximum is taken.</p>
+<p>The shapes of :attr:<code>input</code> and :attr:<code>other</code> don't need to match,
+but they must be :ref:<code>broadcastable &lt;broadcasting-semantics&gt;</code>.</p>
+<p>[ \text{out}_i = \max(\text{tensor}_i, \text{other}_i) ]</p>
+<div class="admonition note">
+<p class="admonition-title">Note:&ensp;When the shapes do not match, the shape of the returned output tensor</p>
+<p>follows the :ref:<code>broadcasting rules &lt;broadcasting-semantics&gt;</code>.</p>
+</div>
+<h2 id="args_2">Args</h2>
+<dl>
+<dt><strong><code>input</code></strong> :&ensp;<code>Tensor</code></dt>
+<dd>the input tensor.</dd>
+<dt><strong><code>other</code></strong> :&ensp;<code>Tensor</code></dt>
+<dd>the second input tensor</dd>
+<dt><strong><code>out</code></strong> :&ensp;<code>Tensor</code>, optional</dt>
+<dd>the output tensor.</dd>
+</dl>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; a = torch.randn(4)
+&gt;&gt;&gt; a
+tensor([ 0.2942, -0.7416,  0.2653, -0.1584])
+&gt;&gt;&gt; b = torch.randn(4)
+&gt;&gt;&gt; b
+tensor([ 0.8722, -1.7421, -0.4141, -0.5055])
+&gt;&gt;&gt; torch.max(a, b)
+tensor([ 0.8722, -0.7416,  0.2653, -0.1584])
+</code></pre></div>
+</dd>
+<dt id="deeprecsys.rl.neural_networks.deep_q_network.sequential_architecture"><code class="name flex">
+<span>def <span class="ident">sequential_architecture</span></span>(<span>layers: List[int], bias: bool = True) ‑> torch.nn.modules.module.Module</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Fully connected layers, with bias, and ReLU activation</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sequential_architecture(layers: List[int], bias: bool = True) -&gt; Module:
+    &#34;&#34;&#34; Fully connected layers, with bias, and ReLU activation&#34;&#34;&#34;
+    architecture = []
+    for i in range(len(layers) - 2):
+        architecture.append(Linear(layers[i], layers[i + 1], bias=bias))
+        architecture.append(ReLU())
+    architecture.append(Linear(layers[-2], layers[-1], bias=bias))
+    return Sequential(*architecture)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="deeprecsys.rl.neural_networks.deep_q_network.DeepQNetwork"><code class="flex name class">
+<span>class <span class="ident">DeepQNetwork</span></span>
+<span>(</span><span>learning_rate: float, architecture: torch.nn.modules.module.Module, discount_factor: float = 0.99, statistics: Union[<a title="deeprecsys.rl.learning_statistics.LearningStatistics" href="../learning_statistics.html#deeprecsys.rl.learning_statistics.LearningStatistics">LearningStatistics</a>, NoneType] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Implementation of a Deep Q Network with a Sequential arquitecture. Layers are
+supposed to be provided as a list of torch modules.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DeepQNetwork(BaseNetwork):
+    &#34;&#34;&#34;Implementation of a Deep Q Network with a Sequential arquitecture. Layers are
+    supposed to be provided as a list of torch modules.&#34;&#34;&#34;
+
+    def __init__(
+        self,
+        learning_rate: float,
+        architecture: Module,
+        discount_factor: float = 0.99,
+        statistics: Optional[LearningStatistics] = None,
+    ):
+        super().__init__()
+        self.model = architecture
+        self.discount_factor = discount_factor
+        self.statistics = statistics
+        self.optimizer = Adam(self.parameters(), lr=learning_rate)
+        if self.device == &#34;cuda&#34;:
+            self.model.cuda()
+
+    def best_action_for_state(self, state: Any) -&gt; Any:
+        if type(state) is tuple:
+            state = array([ravel(s) for s in state])
+        state_tensor = FloatTensor(state).to(device=self.device)
+        q_values = self.model(state_tensor)
+        best_action = max(q_values, dim=-1)[1].item()
+        return best_action
+
+    def learn_from(self, experiences: List[Tuple]):
+        self.optimizer.zero_grad()
+        loss = self._calculate_loss(experiences)
+        loss.backward()
+        self.optimizer.step()
+        # store loss in statistics
+        if self.statistics:
+            if self.device == &#34;cuda&#34;:
+                self.statistics.append_metric(&#34;loss&#34;, loss.detach().cpu().numpy())
+            else:
+                self.statistics.append_metric(&#34;loss&#34;, loss.detach().numpy())
+
+    def _calculate_loss(self, experiences: List[Tuple]) -&gt; Tensor:
+        states, actions, rewards, dones, next_states = [i for i in experiences]
+        state_tensors = FloatTensor(states).to(device=self.device)
+        next_state_tensors = FloatTensor(next_states).to(device=self.device)
+        reward_tensors = FloatTensor(rewards).to(device=self.device).reshape(-1, 1)
+        action_tensors = (
+            LongTensor(array(actions)).reshape(-1, 1).to(device=self.device)
+        )
+        done_tensors = BoolTensor(dones).to(device=self.device)
+        actions_for_states = self.model(state_tensors)
+        q_vals = gather(actions_for_states, 1, action_tensors)
+        next_actions = [self.best_action_for_state(s) for s in next_states]
+        next_action_tensors = (
+            LongTensor(next_actions).reshape(-1, 1).to(device=self.device)
+        )
+        q_vals_next = gather(self.model(next_state_tensors), 1, next_action_tensors)
+        q_vals_next[done_tensors] = 0
+        expected_q_vals = self.discount_factor * q_vals_next + reward_tensors
+        return MSELoss()(q_vals, expected_q_vals.reshape(-1, 1))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork">BaseNetwork</a></li>
+<li>torch.nn.modules.module.Module</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="deeprecsys.rl.neural_networks.deep_q_network.DeepQNetwork.best_action_for_state"><code class="name flex">
+<span>def <span class="ident">best_action_for_state</span></span>(<span>self, state: Any) ‑> Any</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def best_action_for_state(self, state: Any) -&gt; Any:
+    if type(state) is tuple:
+        state = array([ravel(s) for s in state])
+    state_tensor = FloatTensor(state).to(device=self.device)
+    q_values = self.model(state_tensor)
+    best_action = max(q_values, dim=-1)[1].item()
+    return best_action</code></pre>
+</details>
+</dd>
+<dt id="deeprecsys.rl.neural_networks.deep_q_network.DeepQNetwork.learn_from"><code class="name flex">
+<span>def <span class="ident">learn_from</span></span>(<span>self, experiences: List[Tuple])</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def learn_from(self, experiences: List[Tuple]):
+    self.optimizer.zero_grad()
+    loss = self._calculate_loss(experiences)
+    loss.backward()
+    self.optimizer.step()
+    # store loss in statistics
+    if self.statistics:
+        if self.device == &#34;cuda&#34;:
+            self.statistics.append_metric(&#34;loss&#34;, loss.detach().cpu().numpy())
+        else:
+            self.statistics.append_metric(&#34;loss&#34;, loss.detach().numpy())</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork">BaseNetwork</a></b></code>:
+<ul class="hlist">
+<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.forward" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.forward">forward</a></code></li>
+<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.load" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.load">load</a></code></li>
+<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.run_backpropagation" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.run_backpropagation">run_backpropagation</a></code></li>
+<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.save" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.save">save</a></code></li>
+<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.soft_parameter_update" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.soft_parameter_update">soft_parameter_update</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="deeprecsys.rl.neural_networks" href="index.html">deeprecsys.rl.neural_networks</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="deeprecsys.rl.neural_networks.deep_q_network.gather" href="#deeprecsys.rl.neural_networks.deep_q_network.gather">gather</a></code></li>
+<li><code><a title="deeprecsys.rl.neural_networks.deep_q_network.max" href="#deeprecsys.rl.neural_networks.deep_q_network.max">max</a></code></li>
+<li><code><a title="deeprecsys.rl.neural_networks.deep_q_network.sequential_architecture" href="#deeprecsys.rl.neural_networks.deep_q_network.sequential_architecture">sequential_architecture</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="deeprecsys.rl.neural_networks.deep_q_network.DeepQNetwork" href="#deeprecsys.rl.neural_networks.deep_q_network.DeepQNetwork">DeepQNetwork</a></code></h4>
+<ul class="">
+<li><code><a title="deeprecsys.rl.neural_networks.deep_q_network.DeepQNetwork.best_action_for_state" href="#deeprecsys.rl.neural_networks.deep_q_network.DeepQNetwork.best_action_for_state">best_action_for_state</a></code></li>
+<li><code><a title="deeprecsys.rl.neural_networks.deep_q_network.DeepQNetwork.learn_from" href="#deeprecsys.rl.neural_networks.deep_q_network.DeepQNetwork.learn_from">learn_from</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>
