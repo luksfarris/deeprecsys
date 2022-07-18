@@ -1,6 +1,8 @@
-from pytest import fixture
-import numpy as np
 import os
+from typing import Generator
+
+import numpy as np
+from pytest import fixture
 
 
 @fixture
@@ -14,7 +16,7 @@ def sample_state() -> np.array:
 
 
 @fixture
-def tmp_file_cleanup():
+def tmp_file_cleanup() -> Generator:
     current_dir = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(current_dir, "tmp_test_file")
     # setup test by removing file if it exists

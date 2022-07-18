@@ -1,18 +1,19 @@
-from deeprecsys.rl.agents.rainbow import RainbowDQNAgent
-from deeprecsys.rl.neural_networks.value_estimator import ValueEstimator
 import numpy as np
+
 from deeprecsys.movielens_fairness_env import MovieLensFairness  # noqa: F401
-from deeprecsys.rl.agents.reinforce import ReinforceAgent
 from deeprecsys.rl.agents.actor_critic import ActorCriticAgent
+from deeprecsys.rl.agents.rainbow import RainbowDQNAgent
+from deeprecsys.rl.agents.reinforce import ReinforceAgent
+from deeprecsys.rl.neural_networks.value_estimator import ValueEstimator
 
 
-def test_save_load(tmp_file_cleanup):
+def test_save_load(tmp_file_cleanup: str) -> None:
     # given a neural network
     network = ValueEstimator(4, [4], 1)
     # when we train it a little bit
     inputs = np.array([1, 2, 3, 4])
     output = 1
-    for i in range(20):
+    for _ in range(20):
         network.update(inputs, output)
     # then it can accurately make predictions
     predicted_value = network.predict(inputs).detach().cpu().numpy()[0]
@@ -26,7 +27,7 @@ def test_save_load(tmp_file_cleanup):
     assert network.predict(inputs).detach().cpu().numpy()[0] == predicted_value
 
 
-def test_tensorboard_writer_reinforce():
+def test_tensorboard_writer_reinforce() -> None:
     env = MovieLensFairness(slate_size=1)
     reinforce_agent = ReinforceAgent(
         state_size=env.observation_space.shape[0], n_actions=env.action_space.n

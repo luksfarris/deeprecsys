@@ -1,7 +1,9 @@
+from numpy.core.records import ndarray
+
 from deeprecsys.rl.agents.dqn import DQNAgent
 
 
-def test_decaying_epsilon_greedy(sample_state):
+def test_decaying_epsilon_greedy(sample_state: ndarray) -> None:
     agent = DQNAgent(
         1,
         1,
@@ -14,6 +16,6 @@ def test_decaying_epsilon_greedy(sample_state):
     assert agent.action_for_state(sample_state) is not None
     agent.store_experience(sample_state, sample_state[0], 1, True, sample_state)
     assert agent.epsilon == 0.5
-    for i in range(5):
+    for _ in range(5):
         agent.store_experience(sample_state, sample_state[0], 1, True, sample_state)
     assert agent.epsilon == agent.minimum_exploration_probability

@@ -1,9 +1,10 @@
-from deeprecsys.rl.agents.agent import ReinforcementLearning
 from typing import Any, List, Optional
-from deeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
+
+from deeprecsys.rl.agents.agent import ReinforcementLearning
 from deeprecsys.rl.experience_replay.buffer_parameters import (
     ExperienceReplayBufferParameters,
 )
+from deeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
 from deeprecsys.rl.neural_networks.policy_estimator import PolicyEstimator
 from deeprecsys.rl.neural_networks.value_estimator import ValueEstimator
 
@@ -14,16 +15,19 @@ class ActorCriticAgent(ReinforcementLearning):
     This implementation uses stochastic policies.
     TODO: could be a sub class of reinforce"""
 
+    buffer: ExperienceReplayBuffer
+
     def __init__(
         self,
         n_actions: int,
         state_size: int,
-        discount_factor: int = 0.99,
+        discount_factor: float = 0.99,
         actor_hidden_layers: Optional[List[int]] = None,
         critic_hidden_layers: Optional[List[int]] = None,
-        actor_learning_rate=1e-3,
-        critic_learning_rate=1e-3,
-    ):
+        actor_learning_rate: float = 1e-3,
+        critic_learning_rate: float = 1e-3,
+    ) -> None:
+        """Create the actor and critic networks"""
         if not actor_hidden_layers:
             actor_hidden_layers = [state_size * 2, state_size * 2]
         if not critic_hidden_layers:
@@ -45,20 +49,24 @@ class ActorCriticAgent(ReinforcementLearning):
         # starts the buffer
         self.reset_buffer()
 
-    def reset_buffer(self):
+    def reset_buffer(self) -> None:
+        """Clear all the experiences from the buffer"""
         self.buffer = ExperienceReplayBuffer(
             ExperienceReplayBufferParameters(10000, 1, 1)
         )
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -> List[int]:
+        """Return the next best K action"""
         return self.policy_estimator.predict(state, k=k)
 
     def action_for_state(self, state: Any) -> int:
+        """Return the next best action"""
         return self.top_k_actions_for_state(state)[0]
 
     def store_experience(
         self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    ) -> None:
+        """Store the experience in the experience buffer"""
         state_flat = state.flatten()
         new_state_flat = new_state.flatten()
         self.buffer.store_experience(state_flat, action, reward, done, new_state_flat)
@@ -67,7 +75,8 @@ class ActorCriticAgent(ReinforcementLearning):
             self.learn_from_experiences()
             self.reset_buffer()
 
-    def learn_from_experiences(self):
+    def learn_from_experiences(self) -> None:
+        """Backpropagate the actor and critic networks"""
         experiences = list(self.buffer.experience_queue)
         for timestep, experience in enumerate(experiences):
             total_return = 0

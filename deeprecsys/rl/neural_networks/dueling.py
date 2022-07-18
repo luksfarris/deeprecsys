@@ -1,18 +1,20 @@
-from torch import FloatTensor, LongTensor, BoolTensor, gather, Tensor
+from typing import Any, List, Optional, Tuple
+
 from numpy import array, ravel
-from torch.nn import Module, ReLU, Linear, Sequential, functional
+from torch import BoolTensor, FloatTensor, LongTensor, Tensor, gather
+from torch.nn import Linear, Module, ReLU, Sequential, functional
 from torch.optim import Adam
-from typing import List, Any, Tuple, Optional
-from deeprecsys.rl.neural_networks.noisy_layer import NoisyLayer
+
 from deeprecsys.rl.experience_replay.priority_replay_buffer import (
     PrioritizedExperienceReplayBuffer,
 )
 from deeprecsys.rl.learning_statistics import LearningStatistics
 from deeprecsys.rl.neural_networks.base_network import BaseNetwork
+from deeprecsys.rl.neural_networks.noisy_layer import NoisyLayer
 
 
 class DuelingDDQN(BaseNetwork):
-    """ Dueling DQN with Double DQN and Noisy Networks """
+    """Dueling DQN with Double DQN and Noisy Networks"""
 
     def __init__(
         self,
@@ -24,6 +26,7 @@ class DuelingDDQN(BaseNetwork):
         discount_factor: float = 0.99,
         statistics: Optional[LearningStatistics] = None,
     ):
+        """Initialize the network with the provided parameters"""
         super().__init__()
         if not hidden_layers:
             hidden_layers = [256, 256, 64, 64]
@@ -34,10 +37,11 @@ class DuelingDDQN(BaseNetwork):
 
     def _build_network(
         self, n_input: int, n_output: int, noise_sigma: float, hidden_layers: List[int]
-    ):
-        """Builds the dueling network with noisy layers, the value
+    ) -> None:
+        """Build the dueling network with noisy layers, the value
         subnet and the advantage subnet. TODO: add `.to_device()` to Modules"""
-        assert len(hidden_layers) == 4
+        if len(hidden_layers) != 4:
+            raise ValueError("Unexpected amount of layers")
         fc_1, fc_2, value_size, advantage_size = hidden_layers
         self.fully_connected_1 = Linear(n_input, fc_1, bias=True)
         self.fully_connected_2 = NoisyLayer(fc_1, fc_2, bias=True, sigma=noise_sigma)
@@ -52,8 +56,8 @@ class DuelingDDQN(BaseNetwork):
             Linear(advantage_size, n_output, bias=True),
         )
 
-    def forward(self, state):
-        """Calculates the forward between the layers"""
+    def forward(self, state: Tensor) -> Tensor:
+        """Calculate the forward between the layers"""
         layer_1_out = functional.relu(self.fully_connected_1(state))
         layer_2_out = functional.relu(self.fully_connected_2(layer_1_out))
         value_of_state = self.value_subnet(layer_2_out)
@@ -69,19 +73,22 @@ class DuelingDDQN(BaseNetwork):
         return q_values
 
     def get_q_values(self, state: Any) -> Tensor:
+        """Run the state through the network and return the Q-value for each action."""
         if type(state) is tuple:
             state = array([ravel(s) for s in state])
         state_tensor = FloatTensor(state).to(device=self.device)
         return self.forward(state_tensor)
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -> List[int]:
+        """Get the top K actions ranked by their estimated Q-value."""
         q_values = self.get_q_values(state)
         _, top_indices = q_values.topk(k=k)
         return [int(v) for v in top_indices.detach().numpy()]  # TODO: cpu() ?
 
     def learn_with(
         self, buffer: PrioritizedExperienceReplayBuffer, target_network: Module
-    ):
+    ) -> None:
+        """Train the target network using the replay buffer."""
         experiences = buffer.sample_batch()
         self.optimizer.zero_grad()
         td_error, weights = self._calculate_td_error_and_weigths(

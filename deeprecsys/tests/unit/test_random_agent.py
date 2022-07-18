@@ -1,8 +1,10 @@
-from deeprecsys.rl.agents.agent import RandomAgent
-import pytest
-from gym.spaces.discrete import Discrete
-from gym.spaces.box import Box
 import numpy as np
+import pytest
+from gym import Space
+from gym.spaces.box import Box
+from gym.spaces.discrete import Discrete
+
+from deeprecsys.rl.agents.agent import RandomAgent
 
 
 @pytest.mark.parametrize(
@@ -12,7 +14,7 @@ import numpy as np
         Box(0, 1, (2, 2), dtype=np.float32),
     ],
 )
-def test_random_agent(action_space, random_seed):
+def test_random_agent(action_space: Space, random_seed: None) -> None:
     # given an agent
     agent = RandomAgent(action_space, random_state=random_seed)
     # then it has a valid action space

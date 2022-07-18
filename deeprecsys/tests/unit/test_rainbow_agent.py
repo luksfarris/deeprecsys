@@ -1,8 +1,10 @@
-from deeprecsys.rl.agents.rainbow import RainbowDQNAgent
-from deeprecsys.rl.manager import CartpoleManager
-from deeprecsys.rl.learning_statistics import LearningStatistics
-from numpy.random import RandomState
 from typing import Optional
+
+from numpy.random import RandomState
+
+from deeprecsys.rl.agents.rainbow import RainbowDQNAgent
+from deeprecsys.rl.learning_statistics import LearningStatistics
+from deeprecsys.rl.manager import CartpoleManager
 
 
 def _create_agent(random_state: Optional[RandomState]) -> RainbowDQNAgent:
@@ -20,16 +22,14 @@ def _create_agent(random_state: Optional[RandomState]) -> RainbowDQNAgent:
     )
 
 
-def test_rainbow_init():
+def test_rainbow_init() -> None:
     agent = _create_agent(None)
     assert agent is not None
 
 
-def test_reinforce_interaction():
+def test_reinforce_interaction() -> None:
     manager = CartpoleManager(seed=42)
     agent = _create_agent(manager.random_state)
     learning_statistics = LearningStatistics()
-    manager.train(
-        agent, statistics=learning_statistics, max_episodes=200, should_print=False
-    )
+    manager.train(agent, statistics=learning_statistics, max_episodes=200)
     assert learning_statistics.episode_rewards.tolist()[-1] > 30

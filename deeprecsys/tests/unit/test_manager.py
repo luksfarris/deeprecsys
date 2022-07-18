@@ -1,13 +1,13 @@
-from deeprecsys.rl.manager import MovieLensFairnessManager
 from deeprecsys.rl.agents.reinforce import ReinforceAgent
+from deeprecsys.rl.manager import MovieLensFairnessManager
 
 
-def test_movie_lens_manager():
+def test_movie_lens_manager() -> None:
     manager = MovieLensFairnessManager()
     assert manager.env is not None
 
 
-def test_hyperparameter_search():
+def test_hyperparameter_search() -> None:
     manager = MovieLensFairnessManager()
     agent = ReinforceAgent
 

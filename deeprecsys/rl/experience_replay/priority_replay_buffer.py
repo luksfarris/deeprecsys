@@ -1,27 +1,37 @@
 from collections import namedtuple
 from typing import Any, List, Tuple
+
 import numpy
+import numpy as np
+
+from deeprecsys.rl.experience_replay.buffer_parameters import (
+    ExperienceReplayBufferParameters,
+    PERBufferParameters,
+)
 from deeprecsys.rl.experience_replay.experience_buffer import (
     Experience,
     ExperienceReplayBuffer,
 )
-from deeprecsys.rl.experience_replay.buffer_parameters import (
-    PERBufferParameters,
-    ExperienceReplayBufferParameters,
-)
-import numpy as np
 
-PriorityExperience = namedtuple(
+PriorityExperience = namedtuple(  # type: ignore
     "PriorityExperience", field_names=["experience", "priority"]
 )
 
 
 class PrioritizedExperienceReplayBuffer(ExperienceReplayBuffer):
+    """Experience Replay Buffer that gives priority to experiences that the network learns more from. We can tell this
+    using the loss. We use importance sampling to avoid bias towards those experiences."""
+
     def __init__(
         self,
-        buffer_parameters=ExperienceReplayBufferParameters(),
-        per_parameters=PERBufferParameters(),
+        buffer_parameters: ExperienceReplayBufferParameters = None,
+        per_parameters: PERBufferParameters = None,
     ):
+        """Start the buffer with the provided parameters."""
+        if not buffer_parameters:
+            buffer_parameters = ExperienceReplayBufferParameters()
+        if not per_parameters:
+            per_parameters = PERBufferParameters()
         super().__init__(buffer_parameters)
         # beta controls the effect of the weights (how much to learn from each
         # experience in the batch)
@@ -34,31 +44,33 @@ class PrioritizedExperienceReplayBuffer(ExperienceReplayBuffer):
         self.epsilon = per_parameters.epsilon
 
     def priorities(self) -> numpy.array:
-        """ Gets the priority for each experience in the queue """
+        """Get the priority of each experience in the queue"""
         return numpy.array(
             [e.priority for e in self.experience_queue], dtype=numpy.float32
         )
 
     def store_experience(
         self, state: Any, action: Any, reward: float, done: bool, next_state: Any
-    ):
+    ) -> None:
         """We include a priority to the experience. if the queue is empty, priority is 1 (max),
         otherwise we check the maximum priority in the queue"""
         priorities = self.priorities()
         priority = priorities.max() if len(priorities) > 0 else 1.0
         if not np.isnan(priority):
             experience = Experience(state, action, reward, done, next_state)
-            priority_experience = PriorityExperience(experience, priority)
+            priority_experience = PriorityExperience(experience, priority)  # type: ignore
             # append to the right (end) of the queue
             self.experience_queue.append(priority_experience)
 
-    def update_beta(self):
+    def update_beta(self) -> None:
         """We want to grow the beta value slowly and linearly, starting at a value
         close to zero, and stopping at 1.0. This is for the Importance Sampling"""
         if self.beta < 1.0:
             self.beta += self.beta_growth
 
-    def update_priorities(self, batch: List[Tuple], errors_from_batch: List[float]):
+    def update_priorities(
+        self, batch: List[Tuple], errors_from_batch: List[float]
+    ) -> None:
         """We want the priority of elements to be the TD error of plus an epsilon
         constant. The epsilon constant makes sure that no experience ever gets a
         priority zero. This prioritization strategy gives more importance to

@@ -132,3 +132,4 @@ dmypy.json
 output
 html
 .vscode
+.idea

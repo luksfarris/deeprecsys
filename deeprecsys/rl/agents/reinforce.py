@@ -1,26 +1,32 @@
-import numpy as np
-from deeprecsys.rl.agents.agent import ReinforcementLearning
 from typing import Any, List, Optional
-from deeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
+
+import numpy as np
+from torch import FloatTensor
+
+from deeprecsys.rl.agents.agent import ReinforcementLearning
 from deeprecsys.rl.experience_replay.buffer_parameters import (
     ExperienceReplayBufferParameters,
 )
+from deeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
 from deeprecsys.rl.neural_networks.policy_estimator import PolicyEstimator
-from torch import FloatTensor
 
 
 class ReinforceAgent(ReinforcementLearning):
-    """Policy estimator using a value estimator as a baseline.
+    """REINFORCE: Policy estimator using a value estimator as a baseline.
     It's on-policy, for discrete action spaces, and episodic environments."""
+
+    buffer: ExperienceReplayBuffer
 
     def __init__(
         self,
         n_actions: int,
         state_size: int,
         hidden_layers: Optional[List[int]] = None,
-        discount_factor: int = 0.99,  # a.k.a gamma
-        learning_rate=1e-3,
+        discount_factor: float = 0.99,
+        learning_rate: float = 1e-3,
     ):
+        """Start the network with the parameters provided.
+        The discount factor is commonly known as gamma."""
         self.episode_count = 0
         if not hidden_layers:
             hidden_layers = [state_size * 2, state_size * 2]
@@ -34,20 +40,25 @@ class ReinforceAgent(ReinforcementLearning):
         # starts the buffer
         self.reset_buffer()
 
-    def reset_buffer(self):
+    def reset_buffer(self) -> None:
+        """Recreate the experience buffer, effectively forgetting all the experiences
+        collected so far."""
         self.buffer = ExperienceReplayBuffer(
             ExperienceReplayBufferParameters(10000, 1, 1)
         )
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -> List[int]:
+        """Return the k next best actions for the given state."""
         return self.policy_estimator.predict(state, k=k)
 
     def action_for_state(self, state: Any) -> int:
+        """Return the best action for the given state."""
         return self.top_k_actions_for_state(state)[0]
 
     def store_experience(
         self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    ) -> None:
+        """Store the experience in the buffer and run the backpropagation if the buffer is ready."""
         state_flat = state.flatten()
         new_state_flat = new_state.flatten()
         self.buffer.store_experience(state_flat, action, reward, done, new_state_flat)
@@ -71,7 +82,8 @@ class ReinforceAgent(ReinforcementLearning):
         baseline = (discount_r - return_mean) / return_std
         return baseline
 
-    def learn_from_experiences(self):
+    def learn_from_experiences(self) -> None:
+        """Train the policy estimator with all the experiences collected so far."""
         experiences = list(self.buffer.experience_queue)
         states, actions, rewards, dones, next_states = zip(*experiences)
         advantages = self.discounted_rewards(rewards)

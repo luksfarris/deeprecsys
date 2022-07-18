@@ -1,21 +1,22 @@
-from numpy.random import RandomState
-from typing import Any, Optional, List
-from numpy import arange
 from copy import deepcopy
-from deeprecsys.rl.neural_networks.dueling import DuelingDDQN
+from typing import Any, List, Optional
+
+from numpy import arange
+from numpy.random import RandomState
+
+from deeprecsys.rl.agents.agent import ReinforcementLearning
+from deeprecsys.rl.experience_replay.buffer_parameters import (
+    ExperienceReplayBufferParameters,
+    PERBufferParameters,
+)
 from deeprecsys.rl.experience_replay.priority_replay_buffer import (
     PrioritizedExperienceReplayBuffer,
 )
-from deeprecsys.rl.experience_replay.buffer_parameters import (
-    PERBufferParameters,
-    ExperienceReplayBufferParameters,
-)
-from deeprecsys.rl.agents.agent import ReinforcementLearning
 from deeprecsys.rl.learning_statistics import LearningStatistics
+from deeprecsys.rl.neural_networks.dueling import DuelingDDQN
 
 
 class RainbowDQNAgent(ReinforcementLearning):
-
     """Instead of sampling randomly from the buffer we prioritize experiences with PER
     Instead of epsilon-greedy we use gaussian noisy layers for exploration
     Instead of the Q value we calculate Value and Advantage (Dueling DQN).
@@ -36,10 +37,12 @@ class RainbowDQNAgent(ReinforcementLearning):
         discount_factor: float = 0.99,
         learning_rate: float = 0.0001,
         hidden_layers: List[int] = None,
-        random_state: RandomState = RandomState(),
+        random_state: RandomState = None,
         statistics: Optional[LearningStatistics] = None,
     ):
-
+        """Start the network and the buffer with the provided parameters."""
+        if random_state is None:
+            random_state = RandomState()
         self.network = DuelingDDQN(
             n_input=input_size,
             n_output=output_size,
@@ -69,7 +72,7 @@ class RainbowDQNAgent(ReinforcementLearning):
         self.actions = arange(output_size)
         self.random_state = random_state
 
-    def _check_update_network(self):
+    def _check_update_network(self) -> None:
         # we only start training the network once the buffer is ready
         # (the burn in is filled)
         if self.buffer.ready_to_predict():
@@ -82,6 +85,7 @@ class RainbowDQNAgent(ReinforcementLearning):
                 self.target_network.load_state_dict(self.network.state_dict())
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -> Any:
+        """Get the next k best actions for the given state"""
         state_flat = state.flatten()
         if self.buffer.ready_to_predict():
             actions = self.target_network.top_k_actions_for_state(state_flat, k=k)
@@ -91,11 +95,13 @@ class RainbowDQNAgent(ReinforcementLearning):
         return actions
 
     def action_for_state(self, state: Any) -> Any:
+        """Get the next best action for the given state."""
         return self.top_k_actions_for_state(state, k=1)[0]
 
     def store_experience(
         self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    ) -> None:
+        """Store the experience in the buffer"""
         state_flat = state.flatten()
         new_state_flat = new_state.flatten()
         self.buffer.store_experience(state_flat, action, reward, done, new_state_flat)

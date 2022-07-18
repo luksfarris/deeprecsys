@@ -1,10 +1,9 @@
 from deeprecsys.rl.agents.soft_actor_critic import SoftActorCritic
-from deeprecsys.rl.manager import CartpoleManager
 from deeprecsys.rl.learning_statistics import LearningStatistics
-from deeprecsys.rl.manager import MovieLensFairnessManager
+from deeprecsys.rl.manager import CartpoleManager, MovieLensFairnessManager
 
 
-def test_sac_init():
+def test_sac_init() -> None:
     # given some environment
     manager = CartpoleManager()
     # and an a SAC agent
@@ -13,7 +12,7 @@ def test_sac_init():
     assert agent is not None
 
 
-def test_sac_recommendation_env():
+def test_sac_recommendation_env() -> None:
     # given the recsys env
     manager = MovieLensFairnessManager()
     # and a SAC agent
@@ -30,7 +29,7 @@ def test_sac_recommendation_env():
     # then no errors are raised
 
 
-def test_sac_interaction():
+def test_sac_interaction() -> None:
     # given an environment
     manager = CartpoleManager()
     # and a SAC agent
@@ -44,9 +43,7 @@ def test_sac_interaction():
     )
     # when we train the agent
     learning_statistics = LearningStatistics()
-    manager.train(
-        agent, statistics=learning_statistics, max_episodes=200, should_print=False
-    )
+    manager.train(agent, statistics=learning_statistics, max_episodes=200)
     # then it is able to learn
     assert learning_statistics.episode_rewards.tolist()[-1] > 30
     # and it is able to make predictions

@@ -1,14 +1,16 @@
-from torch import FloatTensor, max, LongTensor, BoolTensor, gather, Tensor
+from typing import Any, List, Optional, Tuple
+
 from numpy import array, ravel
-from torch.nn import Sequential, Linear, ReLU, MSELoss, Module
+from torch import BoolTensor, FloatTensor, LongTensor, Tensor, gather, max
+from torch.nn import Linear, Module, MSELoss, ReLU, Sequential
 from torch.optim import Adam
-from typing import List, Any, Tuple, Optional
+
 from deeprecsys.rl.learning_statistics import LearningStatistics
 from deeprecsys.rl.neural_networks.base_network import BaseNetwork
 
 
 def sequential_architecture(layers: List[int], bias: bool = True) -> Module:
-    """ Fully connected layers, with bias, and ReLU activation"""
+    """Fully connected layers, with bias, and ReLU activation"""
     architecture = []
     for i in range(len(layers) - 2):
         architecture.append(Linear(layers[i], layers[i + 1], bias=bias))
@@ -28,6 +30,7 @@ class DeepQNetwork(BaseNetwork):
         discount_factor: float = 0.99,
         statistics: Optional[LearningStatistics] = None,
     ):
+        """Create the deep-Q network with the provided parameters."""
         super().__init__()
         self.model = architecture
         self.discount_factor = discount_factor
@@ -37,6 +40,7 @@ class DeepQNetwork(BaseNetwork):
             self.model.cuda()
 
     def best_action_for_state(self, state: Any) -> Any:
+        """Return the action with the highest estimated Q-value for the given state"""
         if type(state) is tuple:
             state = array([ravel(s) for s in state])
         state_tensor = FloatTensor(state).to(device=self.device)
@@ -44,7 +48,8 @@ class DeepQNetwork(BaseNetwork):
         best_action = max(q_values, dim=-1)[1].item()
         return best_action
 
-    def learn_from(self, experiences: List[Tuple]):
+    def learn_from(self, experiences: List[Tuple]) -> None:
+        """Run the backpropagation from a batch of experiences"""
         self.optimizer.zero_grad()
         loss = self._calculate_loss(experiences)
         loss.backward()

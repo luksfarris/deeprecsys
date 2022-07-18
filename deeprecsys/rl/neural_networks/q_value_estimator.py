@@ -1,15 +1,19 @@
-from deeprecsys.rl.neural_networks.base_network import BaseNetwork
-from deeprecsys.rl.neural_networks.deep_q_network import sequential_architecture
+from typing import Tuple
+
 import torch
-from torch import Tensor, FloatTensor
+from torch import FloatTensor, Tensor
 from torch.nn import Module
 from torch.optim import Adam
 
+from deeprecsys.rl.neural_networks.base_network import BaseNetwork
+from deeprecsys.rl.neural_networks.deep_q_network import sequential_architecture
+
 
 class QValueEstimator(BaseNetwork):
-    """ Estimates the Q-value (expected return) of each (state,action) pair """
+    """Estimate the Q-value (expected return) of each (state,action) pair"""
 
     def __init__(self, inputs: int, outputs: int, learning_rate: float = 1e-3):
+        """Create the network architecture with the provided parameters."""
         super().__init__()
         layers = [inputs] + [inputs * 2, inputs * 2] + [outputs]
         self.model = sequential_architecture(layers)
@@ -17,7 +21,8 @@ class QValueEstimator(BaseNetwork):
         if self.device == "cuda":
             self.model.cuda()
 
-    def predict(self, states: Tensor, actions: Tensor):
+    def predict(self, states: Tensor, actions: Tensor) -> Tensor:
+        """Given a state and an action, return the estimated Q-Value"""
         inputs = torch.cat([states, actions.type(FloatTensor)], dim=1).to(
             device=self.device
         )
@@ -25,19 +30,23 @@ class QValueEstimator(BaseNetwork):
 
 
 class TwinnedQValueEstimator(BaseNetwork):
-    """Estimates the Q-value (expected return) of each (state,action) pair,
-    using 2 independent estimators, and predicting with the minimum estimated Q-value"""
+    """Estimate the Q-value (expected return) of each (state,action) pair,
+    using 2 independent estimators, and predicting with the minimum estimated Q-value.
+    This is the "critic" part of the Actor-Critic model."""
 
     def __init__(self, inputs: int, outputs: int = 1, learning_rate: float = 1e-3):
+        """Create the two estimators with the provided parameters."""
         super().__init__()
         self.Q1 = QValueEstimator(inputs, outputs, learning_rate=learning_rate)
         self.Q2 = QValueEstimator(inputs, outputs, learning_rate=learning_rate)
 
-    def predict(self, states: Tensor, actions: Tensor):
+    def predict(self, states: Tensor, actions: Tensor) -> Tensor:
+        """Given a (state, action) pair return the smaller Q-value of the two networks."""
         q1, q2 = self.forward(states, actions)
         return torch.min(q1, q2)
 
-    def forward(self, states: Tensor, actions: Tensor):
+    def forward(self, states: Tensor, actions: Tensor) -> Tuple:
+        """Calculate the output weighs for the given (state, action) pair"""
         q1 = self.Q1.predict(states, actions)
         q2 = self.Q2.predict(states, actions)
         return q1, q2
@@ -53,6 +62,7 @@ class TwinnedQValueEstimator(BaseNetwork):
         actor: Module,
         target: "TwinnedQValueEstimator",
     ) -> Tensor:
+        """Train the network and return the loss."""
         curr_q1, curr_q2 = self(states, actions)
         target_q = actor.calculate_target_q(
             states,

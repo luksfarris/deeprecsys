@@ -1,27 +1,29 @@
-from deeprecsys.rl.manager import MovieLensFairnessManager, CartpoleManager
+from numpy.random.mtrand import RandomState
+
+from deeprecsys.rl.agents.rainbow import RainbowDQNAgent
 from deeprecsys.rl.experience_replay.experience_buffer import (
     ExperienceReplayBuffer,
     ExperienceReplayBufferParameters,
 )
-from deeprecsys.rl.agents.rainbow import RainbowDQNAgent
+from deeprecsys.rl.manager import CartpoleManager, MovieLensFairnessManager
 
 SEED = 42
 
 
-def test_environment_seed():
+def test_environment_seed() -> None:
     # given an environment
     manager = MovieLensFairnessManager(seed=SEED)
     # and an initial state
     state = manager.env.reset()
     # when we try to restart it several times
-    for attempt in range(3):
+    for _ in range(3):
         # and we recreate the environment
         manager = MovieLensFairnessManager(seed=SEED)
         # then the initial state is always the same
         assert (manager.env.reset() == state).all()
 
 
-def _create_buffer(random_state):
+def _create_buffer(random_state: RandomState) -> ExperienceReplayBuffer:
     buffer = ExperienceReplayBuffer(
         parameters=ExperienceReplayBufferParameters(
             random_state=random_state, batch_size=1, max_experiences=200
@@ -32,7 +34,7 @@ def _create_buffer(random_state):
     return buffer
 
 
-def test_numpy_seed():
+def test_numpy_seed() -> None:
     # given an environment
     manager = CartpoleManager(SEED)
     # and a replay buffer with some experiences
@@ -40,7 +42,7 @@ def test_numpy_seed():
     # and an initial sample
     sample = list(buffer.sample_batch())[0]
     # when we try to get samples several times
-    for attempt in range(3):
+    for _ in range(3):
         manager.setup_reproducibility(SEED)
         buffer = _create_buffer(manager.random_state)
         # then the samples are always the same
@@ -48,7 +50,7 @@ def test_numpy_seed():
         assert new_sample == sample
 
 
-def test_pytorch_weights():
+def test_pytorch_weights() -> None:
     # given a manager and an agent
     manager = CartpoleManager(SEED)
     agent = RainbowDQNAgent(4, 2, buffer_burn_in=32, random_state=manager.random_state)

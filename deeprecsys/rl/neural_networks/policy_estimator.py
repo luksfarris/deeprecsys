@@ -1,10 +1,12 @@
 from typing import Any, List
-from torch.optim import Adam
-from torch.nn import Sequential, Softmax, Linear, Tanh
-from torch import FloatTensor, multinomial, Tensor
+
+import numpy as np
+from torch import FloatTensor, Tensor, multinomial
 from torch import sum as torch_sum
 from torch.distributions import Categorical
-import numpy as np
+from torch.nn import Linear, Sequential, Softmax, Tanh
+from torch.optim import Adam
+
 from deeprecsys.rl.neural_networks.base_network import BaseNetwork
 
 
@@ -17,8 +19,9 @@ class PolicyEstimator(BaseNetwork):
         input_size: int,
         hidden_layers: List[int],
         output_size: int,
-        learning_rate=1e-2,
+        learning_rate: float = 1e-2,
     ):
+        """Create the neural network architecture for the policy estimator with the provided values."""
         super().__init__()
         layers = [input_size] + hidden_layers + [output_size]
         architecture = []
@@ -32,10 +35,14 @@ class PolicyEstimator(BaseNetwork):
         if self.device == "cuda":
             self.model.cuda()
 
-    def action_probabilities(self, state: Any):
+    def action_probabilities(self, state: Any) -> Tensor:
+        """Return a map of each possible action, and the probability that that's the best action to take at
+        this step."""
         return self.model(FloatTensor(state))
 
     def predict(self, state: Any, k: int = 1) -> List[int]:
+        """Given a state, uses the network output to choose the `k` best next actions according to the probability
+        distribution trained so far."""
         probabilities = self.action_probabilities(state)
         prediction = multinomial(probabilities, num_samples=k, replacement=False)
         if self.device == "cuda":
@@ -43,7 +50,10 @@ class PolicyEstimator(BaseNetwork):
         else:
             return prediction.detach().numpy()
 
-    def update(self, state: np.array, reward_baseline: Tensor, action: np.array):
+    def update(
+        self, state: np.array, reward_baseline: Tensor, action: np.array
+    ) -> np.ndarray:
+        """Update the network with the given state, reward, and action taken."""
         state_tensor = FloatTensor(state).to(device=self.device)
         action_tensor = FloatTensor(np.array(action, dtype=np.float32)).to(
             device=self.device

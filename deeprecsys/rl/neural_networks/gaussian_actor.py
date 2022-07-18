@@ -1,10 +1,13 @@
+from typing import Tuple
+
+import torch
+from numpy import ndarray
+from torch import FloatTensor, Tensor
+from torch.distributions import Normal
+from torch.optim import Adam
+
 from deeprecsys.rl.neural_networks.base_network import BaseNetwork
 from deeprecsys.rl.neural_networks.deep_q_network import sequential_architecture
-import torch
-from torch.distributions import Normal
-import numpy as np
-from torch import FloatTensor, Tensor
-from torch.optim import Adam
 from deeprecsys.rl.neural_networks.q_value_estimator import TwinnedQValueEstimator
 
 LOG_STD_MAX = 2
@@ -13,6 +16,8 @@ EPSILON = 1e-6
 
 
 class GaussianActor(BaseNetwork):
+    """Actor network for the soft-actor-critic agent."""
+
     def __init__(
         self,
         inputs: int,
@@ -21,6 +26,7 @@ class GaussianActor(BaseNetwork):
         entropy_coefficient: float = 0.2,
         discount_factor: float = 0.99,
     ):
+        """Create the actor network with the provided parameters."""
         super().__init__()
         network_output = outputs * 2  # estimation of means and standard deviations
         layers = [inputs] + [inputs * 2, inputs * 2] + [network_output]
@@ -30,21 +36,23 @@ class GaussianActor(BaseNetwork):
         self.alpha = torch.tensor(entropy_coefficient).to(self.device)
         self.gamma = discount_factor
 
-    def forward(self, states: FloatTensor):
+    def forward(self, states: FloatTensor) -> Tuple:
+        """Forward the given state in the network and return the output"""
         mean, log_std = torch.chunk(self.model(states), 2, dim=-1)
         log_std = torch.clamp(log_std, min=LOG_STD_MIN, max=LOG_STD_MAX)
         return mean, log_std
 
-    def predict(self, states: np.array):
+    def predict(self, states: ndarray) -> Tuple:
+        """Predict the next best actions for the given state."""
         states_tensor = FloatTensor(states).to(device=self.device)
-        # calculate Gaussian distribusion of (mean, std)
+        # calculate Gaussian distribution of (mean, std)
         means, log_stds = self.forward(states_tensor)
         stds = log_stds.exp()
         normals = Normal(means, stds)
         # sample actions
         xs = normals.rsample()
         actions = torch.tanh(xs)
-        # calculate entropies
+        # calculate entropy
         log_probs = normals.log_prob(xs) - torch.log(1 - actions.pow(2) + EPSILON)
         entropies = -log_probs.sum(dim=1, keepdim=True)
         return actions, entropies, torch.tanh(means)
@@ -59,7 +67,7 @@ class GaussianActor(BaseNetwork):
         weights: Tensor,
         critic: TwinnedQValueEstimator,
     ) -> Tensor:
-        """ Calculates the loss, backpropagates, and returns the entropy. """
+        """Calculate the loss, backpropagates, and returns the entropy."""
         # We re-sample actions to calculate expectations of Q.
         sampled_action, entropy, _ = self.predict(states)
         # expectations of Q with clipped double Q technique
@@ -80,6 +88,7 @@ class GaussianActor(BaseNetwork):
         dones: Tensor,
         target_critic: TwinnedQValueEstimator,
     ) -> Tensor:
+        """Estimate the Q-value for the next states"""
         with torch.no_grad():
             # actor samples next actions
             next_actions, next_entropies, _ = self.predict(next_states)

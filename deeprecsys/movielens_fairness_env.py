@@ -1,16 +1,19 @@
-import os
 import functools
+import math
+import os
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import attr
-from mlfairnessgym.environments.recommenders import movie_lens_utils
-from mlfairnessgym.environments.recommenders import recsim_samplers
-from mlfairnessgym.environments.recommenders import movie_lens_dynamic as movie_lens
-from recsim.simulator import recsim_gym
+import numpy as np
+from gym import Env, Space
 from gym.envs.registration import register
 from gym.spaces import Box, Discrete
-from gym import Env
-from typing import List, Union, Optional
-import numpy as np
-import math
+from numpy.core.multiarray import ndarray
+from recsim.simulator import recsim_gym
+from recsim.simulator.recsim_gym import RecSimGymEnv
+
+from mlfairnessgym.environments.recommenders import movie_lens_dynamic as movie_lens
+from mlfairnessgym.environments.recommenders import movie_lens_utils, recsim_samplers
 
 _env_specs = {
     "id": "MovieLensFairness-v0",
@@ -21,17 +24,17 @@ register(**_env_specs)
 
 
 class MovieLensFairness(Env):
-    """ MovieLens + MLFairnessGym + Recsim + Gym environment """
+    """MovieLens + MLFairnessGym + Recsim + Gym environment"""
 
     def __init__(self, slate_size: int = 1, seed: Optional[int] = None):
         self.slate_size = slate_size
         self.internal_env = self.prepare_environment()
         self._rng = np.random.RandomState(seed=seed)
-        self.ndcg = []
-        self.dcg = []
+        self.ndcg: List[float] = []
+        self.dcg: List[float] = []
 
     def _get_product_relevance(self, product_id: int) -> float:
-        """ Relevance in range (0,1) """
+        """Relevance in range (0,1)"""
         topic_affinity = (
             self.internal_env.environment.user_model._user_state.topic_affinity
         )
@@ -49,7 +52,7 @@ class MovieLensFairness(Env):
     def _get_dcg(self, relevances: List[float]) -> float:
         return sum([relevances[i] / math.log(i + 2, 2) for i in range(len(relevances))])
 
-    def _calculate_ndcg(self, slate_product_ids: List[int]) -> float:
+    def _calculate_ndcg(self, slate_product_ids: List[int]) -> None:
         relevances = [self._get_product_relevance(p) for p in slate_product_ids]
         dcg = self._get_dcg(relevances)
         self.dcg.append(dcg)
@@ -57,9 +60,9 @@ class MovieLensFairness(Env):
         idcg = self._get_dcg(ideal_relevances)
         self.ndcg.append(dcg / idcg)
 
-    def step(self, action: Union[int, List[int]]):
-        """ Normalize reward and flattens/normalizes state """
-        if type(action) in [list, np.ndarray, np.array]:
+    def step(self, action: Union[int, List[int]]) -> Tuple:
+        """Normalize reward and flattens/normalizes state"""
+        if isinstance(action, (list, np.ndarray)):
             self._calculate_ndcg(action)
             state, reward, done, info = self.internal_env.step(action)
             encoded_state, info = self.movielens_state_encoder(state, action, info)
@@ -69,35 +72,35 @@ class MovieLensFairness(Env):
             encoded_state, info = self.movielens_state_encoder(state, [action], info)
             return encoded_state, reward / 5, done, info
 
-    def reset(self):
-        """ flattens/normalizes state """
+    def reset(self) -> List:
+        """flattens/normalizes state"""
         state = self.internal_env.reset()
         self.ndcg = []
         self.dcg = []
         encoded_state, _ = self.movielens_state_encoder(state, [], {})
         return encoded_state
 
-    def render(self, mode="human", close=False):
+    def render(self, mode: str = "human", close: bool = False) -> Any:
         return self.internal_env.render(mode)
 
     @property
-    def action_space(self):
+    def action_space(self) -> Space:
         if self.slate_size == 1:
             return Discrete(self.internal_env.action_space.nvec[0])
         else:
             return self.internal_env.action_space
 
     @property
-    def reward_range(self):
+    def reward_range(self) -> Tuple:
         return self.internal_env.reward_range
 
     @property
-    def observation_space(self):
+    def observation_space(self) -> Space:
         return Box(low=0, high=1.0, shape=(25,), dtype=np.float32)
 
     def movielens_state_encoder(
         self, state: dict, action_slate: List[int], info: dict
-    ) -> List[int]:
+    ) -> Tuple[ndarray, Dict]:
         """if the slate size is > 1, we need to guarantee the Single choice (SC)
         assumption, as described in the paper `SLATEQ: A Tractable Decomposition
         for Reinforcement Learning withRecommendation Sets`
@@ -117,7 +120,7 @@ class MovieLensFairness(Env):
             if doc_features:
                 doc_features = [doc_features[self._rng.choice(self.slate_size)]]
 
-        refined_state = {
+        refined_state: Dict[Union[str, Tuple], Any] = {
             "user": user_features,
             "response": response_features,
             "slate_docs": doc_features,
@@ -134,17 +137,17 @@ class MovieLensFairness(Env):
                     if refined_state["slate_docs"]
                     else ([0] * 19)
                 ),
-                (refined_state.get("response") or ({},))[0].get("rating", 0),
-                (refined_state.get("responsse") or ({},))[0].get("violence_score", 0),
+                (refined_state.get("response") or ({},))[0].get("rating", 0),  # type: ignore
+                (refined_state.get("response") or ({},))[0].get("violence_score", 0),  # type: ignore
             ]
         )
         return flat_state, info
 
-    def slate_action_selector(self, qvals: List[float]) -> List[float]:
+    def slate_action_selector(self, q_vals: List[float]) -> List[float]:
         """Gets the index of the top N highest elements in the predictor array."""
-        return np.argsort(qvals)[-self.slate_size :][::-1]
+        return np.argsort(q_vals)[-self.slate_size :][::-1]
 
-    def prepare_environment(self):
+    def prepare_environment(self) -> RecSimGymEnv:
         current_path = os.path.dirname(__file__)
         data_dir = os.path.join(current_path, "../output")
         embeddings_path = os.path.join(
