@@ -43,11 +43,11 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = [
-    "pydeeprecsys/tests"
+    "deeprecsys/tests"
 ]
 
 [tool.coverage.run]
-omit= ['venv/*', 'pydeeprecsys/tests/*', 'mlfairnessgym/*']
+omit= ['venv/*', 'deeprecsys/tests/*', 'mlfairnessgym/*']
 
 
 
