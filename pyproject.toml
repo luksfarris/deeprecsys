@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "deeprecsys"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python Recommender System based on Deep Reinforcement Learning"
 authors = ["Lucas Farris <lucas@farris.com.br>"]
 license = "MIT"
