@@ -5,6 +5,8 @@ import torch
 from gym.spaces import Discrete
 from torch import BoolTensor, FloatTensor
 
+from deeprecsys.neural_networks.gaussian_actor import GaussianActor
+from deeprecsys.neural_networks.q_value_estimator import TwinnedQValueEstimator
 from deeprecsys.rl.agents.agent import ReinforcementLearning
 from deeprecsys.rl.experience_replay.buffer_parameters import (
     ExperienceReplayBufferParameters,
@@ -13,8 +15,6 @@ from deeprecsys.rl.experience_replay.buffer_parameters import (
 from deeprecsys.rl.experience_replay.priority_replay_buffer import (
     PrioritizedExperienceReplayBuffer,
 )
-from deeprecsys.rl.neural_networks.gaussian_actor import GaussianActor
-from deeprecsys.rl.neural_networks.q_value_estimator import TwinnedQValueEstimator
 
 
 class SoftActorCritic(ReinforcementLearning):

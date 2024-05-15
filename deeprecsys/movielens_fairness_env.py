@@ -8,12 +8,11 @@ import numpy as np
 from gym import Env, Space
 from gym.envs.registration import register
 from gym.spaces import Box, Discrete
+from mlfairnessgym.environments.recommenders import movie_lens_dynamic as movie_lens
+from mlfairnessgym.environments.recommenders import movie_lens_utils, recsim_samplers
 from numpy.core.multiarray import ndarray
 from recsim.simulator import recsim_gym
 from recsim.simulator.recsim_gym import RecSimGymEnv
-
-from mlfairnessgym.environments.recommenders import movie_lens_dynamic as movie_lens
-from mlfairnessgym.environments.recommenders import movie_lens_utils, recsim_samplers
 
 _env_specs = {
     "id": "MovieLensFairness-v0",

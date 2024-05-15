@@ -6,9 +6,9 @@ from torch import FloatTensor, Tensor
 from torch.distributions import Normal
 from torch.optim import Adam
 
-from deeprecsys.rl.neural_networks.base_network import BaseNetwork
-from deeprecsys.rl.neural_networks.deep_q_network import sequential_architecture
-from deeprecsys.rl.neural_networks.q_value_estimator import TwinnedQValueEstimator
+from deeprecsys.neural_networks.base_network import BaseNetwork
+from deeprecsys.neural_networks.deep_q_network import sequential_architecture
+from deeprecsys.neural_networks.q_value_estimator import TwinnedQValueEstimator
 
 LOG_STD_MAX = 2
 LOG_STD_MIN = -20

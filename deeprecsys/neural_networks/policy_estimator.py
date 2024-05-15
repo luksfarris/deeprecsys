@@ -7,7 +7,7 @@ from torch.distributions import Categorical
 from torch.nn import Linear, Sequential, Softmax, Tanh
 from torch.optim import Adam
 
-from deeprecsys.rl.neural_networks.base_network import BaseNetwork
+from deeprecsys.neural_networks.base_network import BaseNetwork
 
 
 class PolicyEstimator(BaseNetwork):

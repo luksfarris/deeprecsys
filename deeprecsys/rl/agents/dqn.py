@@ -3,15 +3,15 @@ from typing import Any, List, Optional
 from numpy import arange
 from numpy.random import RandomState
 
+from deeprecsys.neural_networks.deep_q_network import (
+    DeepQNetwork,
+    sequential_architecture,
+)
 from deeprecsys.rl.agents.epsilon_greedy import DecayingEpsilonGreedy
 from deeprecsys.rl.experience_replay.buffer_parameters import (
     ExperienceReplayBufferParameters,
 )
 from deeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
-from deeprecsys.rl.neural_networks.deep_q_network import (
-    DeepQNetwork,
-    sequential_architecture,
-)
 
 
 class DQNAgent(DecayingEpsilonGreedy):

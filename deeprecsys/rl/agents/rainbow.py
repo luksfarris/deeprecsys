@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 from numpy import arange
 from numpy.random import RandomState
 
+from deeprecsys.neural_networks.dueling import DuelingDDQN
 from deeprecsys.rl.agents.agent import ReinforcementLearning
 from deeprecsys.rl.experience_replay.buffer_parameters import (
     ExperienceReplayBufferParameters,
@@ -13,7 +14,6 @@ from deeprecsys.rl.experience_replay.priority_replay_buffer import (
     PrioritizedExperienceReplayBuffer,
 )
 from deeprecsys.rl.learning_statistics import LearningStatistics
-from deeprecsys.rl.neural_networks.dueling import DuelingDDQN
 
 
 class RainbowDQNAgent(ReinforcementLearning):

@@ -1,12 +1,12 @@
 from typing import Any, List, Optional
 
+from deeprecsys.neural_networks.policy_estimator import PolicyEstimator
+from deeprecsys.neural_networks.value_estimator import ValueEstimator
 from deeprecsys.rl.agents.agent import ReinforcementLearning
 from deeprecsys.rl.experience_replay.buffer_parameters import (
     ExperienceReplayBufferParameters,
 )
 from deeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
-from deeprecsys.rl.neural_networks.policy_estimator import PolicyEstimator
-from deeprecsys.rl.neural_networks.value_estimator import ValueEstimator
 
 
 class ActorCriticAgent(ReinforcementLearning):

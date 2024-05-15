@@ -5,8 +5,8 @@ from torch import BoolTensor, FloatTensor, LongTensor, Tensor, gather, max
 from torch.nn import Linear, Module, MSELoss, ReLU, Sequential
 from torch.optim import Adam
 
+from deeprecsys.neural_networks.base_network import BaseNetwork
 from deeprecsys.rl.learning_statistics import LearningStatistics
-from deeprecsys.rl.neural_networks.base_network import BaseNetwork
 
 
 def sequential_architecture(layers: List[int], bias: bool = True) -> Module:

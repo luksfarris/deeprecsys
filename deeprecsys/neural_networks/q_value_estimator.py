@@ -5,8 +5,8 @@ from torch import FloatTensor, Tensor
 from torch.nn import Module
 from torch.optim import Adam
 
-from deeprecsys.rl.neural_networks.base_network import BaseNetwork
-from deeprecsys.rl.neural_networks.deep_q_network import sequential_architecture
+from deeprecsys.neural_networks.base_network import BaseNetwork
+from deeprecsys.neural_networks.deep_q_network import sequential_architecture
 
 
 class QValueEstimator(BaseNetwork):

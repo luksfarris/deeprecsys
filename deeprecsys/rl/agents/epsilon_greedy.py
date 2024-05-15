@@ -3,7 +3,7 @@ from typing import Any
 
 from numpy.random import RandomState
 
-from .agent import ReinforcementLearning
+from deeprecsys.rl.agents.agent import ReinforcementLearning
 
 
 class DecayingEpsilonGreedy(ReinforcementLearning, ABC):

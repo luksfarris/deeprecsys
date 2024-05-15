@@ -5,12 +5,12 @@ from torch import BoolTensor, FloatTensor, LongTensor, Tensor, gather
 from torch.nn import Linear, Module, ReLU, Sequential, functional
 from torch.optim import Adam
 
+from deeprecsys.neural_networks.base_network import BaseNetwork
+from deeprecsys.neural_networks.noisy_layer import NoisyLayer
 from deeprecsys.rl.experience_replay.priority_replay_buffer import (
     PrioritizedExperienceReplayBuffer,
 )
 from deeprecsys.rl.learning_statistics import LearningStatistics
-from deeprecsys.rl.neural_networks.base_network import BaseNetwork
-from deeprecsys.rl.neural_networks.noisy_layer import NoisyLayer
 
 
 class DuelingDDQN(BaseNetwork):
