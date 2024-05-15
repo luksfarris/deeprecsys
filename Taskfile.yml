@@ -34,6 +34,7 @@ tasks:
     desc: Runs all the tests
     cmds:
       - ${VENV_FOLDER}/${EXEC_FOLDER}/poetry run coverage run -m pytest tests
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/poetry run coverage xml
 
   docs:
     desc: Generates the documentation
