@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "deeprecsys"
-version = "0.2.1"
+version = "0.2.2"
 description = "deeprecsys is an open tool belt to speed up the development of modern data science projects at an enterprise level"
 authors = ["Lucas Farris <lucas@farris.com.br>"]
 license = "MIT"
