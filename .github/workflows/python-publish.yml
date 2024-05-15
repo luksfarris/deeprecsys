@@ -26,6 +26,10 @@ jobs:
           task setup
           venv/bin/poetry run pre-commit uninstall
           task test
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
       - name: Generate Documentation
         run: |
           task docs
