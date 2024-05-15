@@ -1,9 +1,15 @@
 [tool.poetry]
 name = "deeprecsys"
-version = "0.2.2"
+version = "0.2.4"
 description = "deeprecsys is an open tool belt to speed up the development of modern data science projects at an enterprise level"
 authors = ["Lucas Farris <lucas@farris.com.br>"]
-license = "MIT"
+license = "GPL-3.0-or-later"
+readme = "README.md"
+homepage = "https://deeprecsys.com"
+repository = "https://github.com/luksfarris/deeprecsys"
+documentation = "https://deeprecsys.com"
+keywords = ["machinelearning", "reinforcementlearning", "recommmendersystems", "deeplearning", "datascience"]
+classifiers = ["Topic :: Scientific/Engineering :: Artificial Intelligence"]
 
 [[tool.poetry.source]]
 name = "cputorch"
@@ -15,7 +21,7 @@ priority = "supplemental"
 python = ">=3.9,<4"
 pandas = "^2.2.2"
 pyarrow = "^16.1.0"
-torch = { version = "^2.3.0+cpu", source = "cputorch", optional = true }
+torch = { version = "2.3.0+cpu", source = "cputorch", optional = true }
 keras = { version = "^3.3.3", optional = true }
 gymnasium = { version = "^0.29.1", optional = true }
 tensorboard = {version = "^2.16.2", optional = true}
@@ -61,7 +67,7 @@ target-version = "py311"
 max-complexity = 5
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = [
-    "S101", # assertions
-    "D103" # function docstrings
-]
+"tests/**/*.py" = ["S101", "D103"]
+
+
+

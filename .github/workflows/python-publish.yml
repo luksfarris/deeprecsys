@@ -43,5 +43,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO_NAME: ${{ github.repository }}
-          TAG: $(task version)
-        run: gh release create "$TAG" --repo="$REPO_NAME" --title="$TAG" --generate-notes
+        run: |
+          echo "Publishing release v$(task version)"
+          gh release create v$(task version) --repo ${REPO_NAME} --title v$(task version) --generate-notes
