@@ -2,7 +2,7 @@ from copy import deepcopy
 from typing import Any, Optional
 
 import torch
-from gym.spaces import Discrete
+from gymnasium.spaces import Discrete
 from torch import BoolTensor, FloatTensor
 
 from deeprecsys.neural_networks.gaussian_actor import GaussianActor
@@ -21,7 +21,8 @@ class SoftActorCritic(ReinforcementLearning):
     """TODO: there's things to fix in this agent. It needs temperature
     optimization, and replace the current q-value estimator with the
     Q-value + value + value_target estimators, like described here
-    https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html"""
+    https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html
+    """
 
     def __init__(
         self,
@@ -50,9 +51,7 @@ class SoftActorCritic(ReinforcementLearning):
             entropy_coefficient=entropy_coefficient,
             discount_factor=discount_factor,
         )
-        self.critic = TwinnedQValueEstimator(
-            inputs=state_size + 1, learning_rate=learning_rate
-        )
+        self.critic = TwinnedQValueEstimator(inputs=state_size + 1, learning_rate=learning_rate)
         self.target_critic = deepcopy(self.critic)
         self.buffer = PrioritizedExperienceReplayBuffer(
             buffer_parameters=buffer_parameters,
@@ -72,8 +71,7 @@ class SoftActorCritic(ReinforcementLearning):
     def should_update_network(self) -> bool:
         """Check if the buffer is ready to predict and if enough timesteps have passed."""
         return (
-            self.timesteps >= self.timesteps_to_start_predicting
-            and self.buffer.ready_to_predict()  # noqa
+            self.timesteps >= self.timesteps_to_start_predicting and self.buffer.ready_to_predict()  # noqa
         )
 
     def action_for_state(self, state: Any) -> Any:
@@ -88,9 +86,7 @@ class SoftActorCritic(ReinforcementLearning):
         """TODO"""
         pass
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ) -> None:
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -> None:
         """Store the experience in the buffer."""
         self.timesteps += 1
         state_flat = state.flatten()
@@ -127,9 +123,7 @@ class SoftActorCritic(ReinforcementLearning):
 
         # batch with indices and priority weights
         batch = self.buffer.sample_batch()
-        states, actions, rewards, dones, next_states, weights, samples = [
-            i for i in batch
-        ]
+        states, actions, rewards, dones, next_states, weights, samples = [i for i in batch]
         # convert to tensors
         device = self.critic.device
         state_tensors = FloatTensor(states).to(device=device)

@@ -13,7 +13,8 @@ from deeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBu
 
 class ReinforceAgent(ReinforcementLearning):
     """REINFORCE: Policy estimator using a value estimator as a baseline.
-    It's on-policy, for discrete action spaces, and episodic environments."""
+    It's on-policy, for discrete action spaces, and episodic environments.
+    """
 
     buffer: ExperienceReplayBuffer
 
@@ -26,7 +27,8 @@ class ReinforceAgent(ReinforcementLearning):
         learning_rate: float = 1e-3,
     ):
         """Start the network with the parameters provided.
-        The discount factor is commonly known as gamma."""
+        The discount factor is commonly known as gamma.
+        """
         self.episode_count = 0
         if not hidden_layers:
             hidden_layers = [state_size * 2, state_size * 2]
@@ -42,10 +44,9 @@ class ReinforceAgent(ReinforcementLearning):
 
     def reset_buffer(self) -> None:
         """Recreate the experience buffer, effectively forgetting all the experiences
-        collected so far."""
-        self.buffer = ExperienceReplayBuffer(
-            ExperienceReplayBufferParameters(10000, 1, 1)
-        )
+        collected so far.
+        """
+        self.buffer = ExperienceReplayBuffer(ExperienceReplayBufferParameters(10000, 1, 1))
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -> List[int]:
         """Return the k next best actions for the given state."""
@@ -55,9 +56,7 @@ class ReinforceAgent(ReinforcementLearning):
         """Return the best action for the given state."""
         return self.top_k_actions_for_state(state)[0]
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ) -> None:
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -> None:
         """Store the experience in the buffer and run the backpropagation if the buffer is ready."""
         state_flat = state.flatten()
         new_state_flat = new_state.flatten()
@@ -70,7 +69,8 @@ class ReinforceAgent(ReinforcementLearning):
     def discounted_rewards(self, rewards: np.array) -> np.array:
         """From a list of rewards obtained in an episode, we calculate
         the return minus the baseline. The baseline is the list of discounted
-        rewards minus the mean, divided by the standard deviation."""
+        rewards minus the mean, divided by the standard deviation.
+        """
         discount_r = np.zeros_like(rewards)
         timesteps = range(len(rewards))
         reward_sum = 0
@@ -85,9 +85,7 @@ class ReinforceAgent(ReinforcementLearning):
     def learn_from_experiences(self) -> None:
         """Train the policy estimator with all the experiences collected so far."""
         experiences = list(self.buffer.experience_queue)
-        states, actions, rewards, dones, next_states = zip(*experiences)
+        states, actions, rewards, dones, next_states = zip(*experiences, strict=False)
         advantages = self.discounted_rewards(rewards)
-        advantages_tensor = FloatTensor(advantages).to(
-            device=self.policy_estimator.device
-        )
+        advantages_tensor = FloatTensor(advantages).to(device=self.policy_estimator.device)
         self.policy_estimator.update(states, advantages_tensor, actions)

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
-<title>deeprecsys.rl.neural_networks.dueling API documentation</title>
+<meta name="generator" content="pdoc 0.10.0" />
+<title>deeprecsys.neural_networks.dueling API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,28 +19,30 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>deeprecsys.rl.neural_networks.dueling</code></h1>
+<h1 class="title">Module <code>deeprecsys.neural_networks.dueling</code></h1>
 </header>
 <section id="section-intro">
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from torch import FloatTensor, LongTensor, BoolTensor, gather, Tensor
+<pre><code class="python">from typing import Any, List, Optional, Tuple
+
 from numpy import array, ravel
-from torch.nn import Module, ReLU, Linear, Sequential, functional
+from torch import BoolTensor, FloatTensor, LongTensor, Tensor, gather
+from torch.nn import Linear, Module, ReLU, Sequential, functional
 from torch.optim import Adam
-from typing import List, Any, Tuple, Optional
-from deeprecsys.rl.neural_networks.noisy_layer import NoisyLayer
+
+from deeprecsys.neural_networks.base_network import BaseNetwork
+from deeprecsys.neural_networks.noisy_layer import NoisyLayer
 from deeprecsys.rl.experience_replay.priority_replay_buffer import (
     PrioritizedExperienceReplayBuffer,
 )
 from deeprecsys.rl.learning_statistics import LearningStatistics
-from deeprecsys.rl.neural_networks.base_network import BaseNetwork
 
 
 class DuelingDDQN(BaseNetwork):
-    &#34;&#34;&#34; Dueling DQN with Double DQN and Noisy Networks &#34;&#34;&#34;
+    &#34;&#34;&#34;Dueling DQN with Double DQN and Noisy Networks&#34;&#34;&#34;
 
     def __init__(
         self,
@@ -52,6 +54,7 @@ class DuelingDDQN(BaseNetwork):
         discount_factor: float = 0.99,
         statistics: Optional[LearningStatistics] = None,
     ):
+        &#34;&#34;&#34;Initialize the network with the provided parameters&#34;&#34;&#34;
         super().__init__()
         if not hidden_layers:
             hidden_layers = [256, 256, 64, 64]
@@ -60,12 +63,12 @@ class DuelingDDQN(BaseNetwork):
         self.optimizer = Adam(self.parameters(), lr=learning_rate)
         self.statistics = statistics
 
-    def _build_network(
-        self, n_input: int, n_output: int, noise_sigma: float, hidden_layers: List[int]
-    ):
-        &#34;&#34;&#34;Builds the dueling network with noisy layers, the value
-        subnet and the advantage subnet. TODO: add `.to_device()` to Modules&#34;&#34;&#34;
-        assert len(hidden_layers) == 4
+    def _build_network(self, n_input: int, n_output: int, noise_sigma: float, hidden_layers: List[int]) -&gt; None:
+        &#34;&#34;&#34;Build the dueling network with noisy layers, the value
+        subnet and the advantage subnet. TODO: add `.to_device()` to Modules
+        &#34;&#34;&#34;
+        if len(hidden_layers) != 4:
+            raise ValueError(&#34;Unexpected amount of layers&#34;)
         fc_1, fc_2, value_size, advantage_size = hidden_layers
         self.fully_connected_1 = Linear(n_input, fc_1, bias=True)
         self.fully_connected_2 = NoisyLayer(fc_1, fc_2, bias=True, sigma=noise_sigma)
@@ -80,8 +83,8 @@ class DuelingDDQN(BaseNetwork):
             Linear(advantage_size, n_output, bias=True),
         )
 
-    def forward(self, state):
-        &#34;&#34;&#34;Calculates the forward between the layers&#34;&#34;&#34;
+    def forward(self, state: Tensor) -&gt; Tensor:
+        &#34;&#34;&#34;Calculate the forward between the layers&#34;&#34;&#34;
         layer_1_out = functional.relu(self.fully_connected_1(state))
         layer_2_out = functional.relu(self.fully_connected_2(layer_1_out))
         value_of_state = self.value_subnet(layer_2_out)
@@ -89,86 +92,69 @@ class DuelingDDQN(BaseNetwork):
         # This is the Dueling DQN part
         # Combines V and A to get Q: Q(s,a) = V(s) + (A(s,a) - 1/|A| * sum A(s,a&#39;))
         if len(state.shape) == 2:
-            q_values = value_of_state + (
-                advantage_of_state - advantage_of_state.mean(dim=1, keepdim=True)
-            )
+            q_values = value_of_state + (advantage_of_state - advantage_of_state.mean(dim=1, keepdim=True))
         else:
             q_values = value_of_state + (advantage_of_state - advantage_of_state.mean())
         return q_values
 
     def get_q_values(self, state: Any) -&gt; Tensor:
+        &#34;&#34;&#34;Run the state through the network and return the Q-value for each action.&#34;&#34;&#34;
         if type(state) is tuple:
             state = array([ravel(s) for s in state])
         state_tensor = FloatTensor(state).to(device=self.device)
         return self.forward(state_tensor)
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; List[int]:
+        &#34;&#34;&#34;Get the top K actions ranked by their estimated Q-value.&#34;&#34;&#34;
         q_values = self.get_q_values(state)
         _, top_indices = q_values.topk(k=k)
         return [int(v) for v in top_indices.detach().numpy()]  # TODO: cpu() ?
 
-    def learn_with(
-        self, buffer: PrioritizedExperienceReplayBuffer, target_network: Module
-    ):
+    def learn_with(self, buffer: PrioritizedExperienceReplayBuffer, target_network: Module) -&gt; None:
+        &#34;&#34;&#34;Train the target network using the replay buffer.&#34;&#34;&#34;
         experiences = buffer.sample_batch()
         self.optimizer.zero_grad()
-        td_error, weights = self._calculate_td_error_and_weigths(
-            experiences, target_network
-        )
+        td_error, weights = self._calculate_td_error_and_weigths(experiences, target_network)
         loss = (td_error.pow(2) * weights).mean().to(self.device)
         loss.backward()
         self.optimizer.step()
         # store loss in statistics
         if self.statistics:
             if self.device == &#34;cuda&#34;:
-                self.statistics.append_metric(
-                    &#34;loss&#34;, float(loss.detach().cpu().numpy())
-                )
+                self.statistics.append_metric(&#34;loss&#34;, float(loss.detach().cpu().numpy()))
             else:
                 self.statistics.append_metric(&#34;loss&#34;, float(loss.detach().numpy()))
         # update buffer priorities
-        errors_from_batch = td_error.detach().cpu().numpy()
+        errors_from_batch = td_error.detach().cpu().numpy().flatten()
         buffer.update_priorities(experiences, errors_from_batch)
 
     def _calculate_td_error_and_weigths(
         self, experiences: List[Tuple], target_network: Module
     ) -&gt; Tuple[Tensor, Tensor]:
-        states, actions, rewards, dones, next_states, weights, samples = [
-            i for i in experiences
-        ]
+        states, actions, rewards, dones, next_states, weights, samples = [i for i in experiences]
         # convert to tensors
         state_tensors = FloatTensor(states).to(device=self.device)
         next_state_tensors = FloatTensor(next_states).to(device=self.device)
         reward_tensors = FloatTensor(rewards).to(device=self.device).reshape(-1, 1)
-        action_tensors = (
-            LongTensor(array(actions)).reshape(-1, 1).to(device=self.device)
-        )
+        action_tensors = LongTensor(array(actions)).reshape(-1, 1).to(device=self.device)
         done_tensors = BoolTensor(dones).to(device=self.device)
         weight_tensors = FloatTensor(weights).to(device=self.device)
         # the following logic is the DDQN update
         # Then we get the predicted actions for the states that came next
         # (using the main network)
-        actions_for_next_states = [
-            self.top_k_actions_for_state(s)[0] for s in next_state_tensors
-        ]
-        actions_for_next_states_tensor = (
-            LongTensor(actions_for_next_states).reshape(-1, 1).to(device=self.device)
-        )
+        actions_for_next_states = [self.top_k_actions_for_state(s)[0] for s in next_state_tensors]
+        actions_for_next_states_tensor = LongTensor(actions_for_next_states).reshape(-1, 1).to(device=self.device)
         # Then we use them to get the estimated Q Values for these next states/actions,
         # according to the target network. Remember that the target network is a copy
         # of this one taken some steps ago
         next_q_values = target_network.forward(next_state_tensors)
         # now we get the q values for the actions that were predicted for the next state
         # we call detach() so no gradient will be backpropagated along this variable
-        next_q_values_for_actions = gather(
-            next_q_values, 1, actions_for_next_states_tensor
-        ).detach()
+        next_q_values_for_actions = gather(next_q_values, 1, actions_for_next_states_tensor).detach()
         # zero value for done timesteps
         next_q_values_for_actions[done_tensors] = 0
         # bellman equation
-        expected_q_values = (
-            self.discount_factor * next_q_values_for_actions + reward_tensors
-        )
+        expected_q_values = self.discount_factor * next_q_values_for_actions + reward_tensors
         # Then get the Q-Values of the main network for the selected actions
         q_values = gather(self.forward(state_tensors), 1, action_tensors)
         # And compare them (this is the time-difference or TD error)
@@ -181,60 +167,23 @@ class DuelingDDQN(BaseNetwork):
 <section>
 </section>
 <section>
-<h2 class="section-title" id="header-functions">Functions</h2>
-<dl>
-<dt id="deeprecsys.rl.neural_networks.dueling.gather"><code class="name flex">
-<span>def <span class="ident">gather</span></span>(<span>input, dim, index, out=None, sparse_grad=False) ‑> torch.Tensor</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Gathers values along an axis specified by <code>dim</code>.</p>
-<p>For a 3-D tensor the output is specified by::</p>
-<pre><code>out[i][j][k] = input[index[i][j][k]][j][k]  # if dim == 0
-out[i][j][k] = input[i][index[i][j][k]][k]  # if dim == 1
-out[i][j][k] = input[i][j][index[i][j][k]]  # if dim == 2
-</code></pre>
-<p>If :attr:<code>input</code> is an n-dimensional tensor with size
-:math:<code>(x_0, x_1..., x_{i-1}, x_i, x_{i+1}, ..., x_{n-1})</code>
-and <code>dim = i</code>, then :attr:<code>index</code> must be an :math:<code>n</code>-dimensional tensor with
-size :math:<code>(x_0, x_1, ..., x_{i-1}, y, x_{i+1}, ..., x_{n-1})</code> where :math:<code>y \geq 1</code>
-and :attr:<code>out</code> will have the same size as :attr:<code>index</code>.</p>
-<h2 id="args">Args</h2>
-<dl>
-<dt><strong><code>input</code></strong> :&ensp;<code>Tensor</code></dt>
-<dd>the source tensor</dd>
-<dt><strong><code>dim</code></strong> :&ensp;<code>int</code></dt>
-<dd>the axis along which to index</dd>
-<dt><strong><code>index</code></strong> :&ensp;<code>LongTensor</code></dt>
-<dd>the indices of elements to gather</dd>
-<dt><strong><code>out</code></strong> :&ensp;<code>Tensor</code>, optional</dt>
-<dd>the destination tensor</dd>
-</dl>
-<p>sparse_grad(bool,optional): If <code>True</code>, gradient w.r.t. :attr:<code>input</code> will be a sparse tensor.
-Example::</p>
-<pre><code>&gt;&gt;&gt; t = torch.tensor([[1,2],[3,4]])
-&gt;&gt;&gt; torch.gather(t, 1, torch.tensor([[0,0],[1,0]]))
-tensor([[ 1,  1],
-        [ 4,  3]])
-</code></pre></div>
-</dd>
-</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="deeprecsys.rl.neural_networks.dueling.DuelingDDQN"><code class="flex name class">
+<dt id="deeprecsys.neural_networks.dueling.DuelingDDQN"><code class="flex name class">
 <span>class <span class="ident">DuelingDDQN</span></span>
-<span>(</span><span>n_input: int, n_output: int, learning_rate: float, hidden_layers: List[int] = None, noise_sigma: float = 0.17, discount_factor: float = 0.99, statistics: Union[<a title="deeprecsys.rl.learning_statistics.LearningStatistics" href="../learning_statistics.html#deeprecsys.rl.learning_statistics.LearningStatistics">LearningStatistics</a>, NoneType] = None)</span>
+<span>(</span><span>n_input: int, n_output: int, learning_rate: float, hidden_layers: List[int] = None, noise_sigma: float = 0.17, discount_factor: float = 0.99, statistics: Optional[<a title="deeprecsys.rl.learning_statistics.LearningStatistics" href="../rl/learning_statistics.html#deeprecsys.rl.learning_statistics.LearningStatistics">LearningStatistics</a>] = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Dueling DQN with Double DQN and Noisy Networks </p>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p></div>
+<div class="desc"><p>Dueling DQN with Double DQN and Noisy Networks</p>
+<p>Initialize the network with the provided parameters</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DuelingDDQN(BaseNetwork):
-    &#34;&#34;&#34; Dueling DQN with Double DQN and Noisy Networks &#34;&#34;&#34;
+    &#34;&#34;&#34;Dueling DQN with Double DQN and Noisy Networks&#34;&#34;&#34;
 
     def __init__(
         self,
@@ -246,6 +195,7 @@ tensor([[ 1,  1],
         discount_factor: float = 0.99,
         statistics: Optional[LearningStatistics] = None,
     ):
+        &#34;&#34;&#34;Initialize the network with the provided parameters&#34;&#34;&#34;
         super().__init__()
         if not hidden_layers:
             hidden_layers = [256, 256, 64, 64]
@@ -254,12 +204,12 @@ tensor([[ 1,  1],
         self.optimizer = Adam(self.parameters(), lr=learning_rate)
         self.statistics = statistics
 
-    def _build_network(
-        self, n_input: int, n_output: int, noise_sigma: float, hidden_layers: List[int]
-    ):
-        &#34;&#34;&#34;Builds the dueling network with noisy layers, the value
-        subnet and the advantage subnet. TODO: add `.to_device()` to Modules&#34;&#34;&#34;
-        assert len(hidden_layers) == 4
+    def _build_network(self, n_input: int, n_output: int, noise_sigma: float, hidden_layers: List[int]) -&gt; None:
+        &#34;&#34;&#34;Build the dueling network with noisy layers, the value
+        subnet and the advantage subnet. TODO: add `.to_device()` to Modules
+        &#34;&#34;&#34;
+        if len(hidden_layers) != 4:
+            raise ValueError(&#34;Unexpected amount of layers&#34;)
         fc_1, fc_2, value_size, advantage_size = hidden_layers
         self.fully_connected_1 = Linear(n_input, fc_1, bias=True)
         self.fully_connected_2 = NoisyLayer(fc_1, fc_2, bias=True, sigma=noise_sigma)
@@ -274,8 +224,8 @@ tensor([[ 1,  1],
             Linear(advantage_size, n_output, bias=True),
         )
 
-    def forward(self, state):
-        &#34;&#34;&#34;Calculates the forward between the layers&#34;&#34;&#34;
+    def forward(self, state: Tensor) -&gt; Tensor:
+        &#34;&#34;&#34;Calculate the forward between the layers&#34;&#34;&#34;
         layer_1_out = functional.relu(self.fully_connected_1(state))
         layer_2_out = functional.relu(self.fully_connected_2(layer_1_out))
         value_of_state = self.value_subnet(layer_2_out)
@@ -283,86 +233,69 @@ tensor([[ 1,  1],
         # This is the Dueling DQN part
         # Combines V and A to get Q: Q(s,a) = V(s) + (A(s,a) - 1/|A| * sum A(s,a&#39;))
         if len(state.shape) == 2:
-            q_values = value_of_state + (
-                advantage_of_state - advantage_of_state.mean(dim=1, keepdim=True)
-            )
+            q_values = value_of_state + (advantage_of_state - advantage_of_state.mean(dim=1, keepdim=True))
         else:
             q_values = value_of_state + (advantage_of_state - advantage_of_state.mean())
         return q_values
 
     def get_q_values(self, state: Any) -&gt; Tensor:
+        &#34;&#34;&#34;Run the state through the network and return the Q-value for each action.&#34;&#34;&#34;
         if type(state) is tuple:
             state = array([ravel(s) for s in state])
         state_tensor = FloatTensor(state).to(device=self.device)
         return self.forward(state_tensor)
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; List[int]:
+        &#34;&#34;&#34;Get the top K actions ranked by their estimated Q-value.&#34;&#34;&#34;
         q_values = self.get_q_values(state)
         _, top_indices = q_values.topk(k=k)
         return [int(v) for v in top_indices.detach().numpy()]  # TODO: cpu() ?
 
-    def learn_with(
-        self, buffer: PrioritizedExperienceReplayBuffer, target_network: Module
-    ):
+    def learn_with(self, buffer: PrioritizedExperienceReplayBuffer, target_network: Module) -&gt; None:
+        &#34;&#34;&#34;Train the target network using the replay buffer.&#34;&#34;&#34;
         experiences = buffer.sample_batch()
         self.optimizer.zero_grad()
-        td_error, weights = self._calculate_td_error_and_weigths(
-            experiences, target_network
-        )
+        td_error, weights = self._calculate_td_error_and_weigths(experiences, target_network)
         loss = (td_error.pow(2) * weights).mean().to(self.device)
         loss.backward()
         self.optimizer.step()
         # store loss in statistics
         if self.statistics:
             if self.device == &#34;cuda&#34;:
-                self.statistics.append_metric(
-                    &#34;loss&#34;, float(loss.detach().cpu().numpy())
-                )
+                self.statistics.append_metric(&#34;loss&#34;, float(loss.detach().cpu().numpy()))
             else:
                 self.statistics.append_metric(&#34;loss&#34;, float(loss.detach().numpy()))
         # update buffer priorities
-        errors_from_batch = td_error.detach().cpu().numpy()
+        errors_from_batch = td_error.detach().cpu().numpy().flatten()
         buffer.update_priorities(experiences, errors_from_batch)
 
     def _calculate_td_error_and_weigths(
         self, experiences: List[Tuple], target_network: Module
     ) -&gt; Tuple[Tensor, Tensor]:
-        states, actions, rewards, dones, next_states, weights, samples = [
-            i for i in experiences
-        ]
+        states, actions, rewards, dones, next_states, weights, samples = [i for i in experiences]
         # convert to tensors
         state_tensors = FloatTensor(states).to(device=self.device)
         next_state_tensors = FloatTensor(next_states).to(device=self.device)
         reward_tensors = FloatTensor(rewards).to(device=self.device).reshape(-1, 1)
-        action_tensors = (
-            LongTensor(array(actions)).reshape(-1, 1).to(device=self.device)
-        )
+        action_tensors = LongTensor(array(actions)).reshape(-1, 1).to(device=self.device)
         done_tensors = BoolTensor(dones).to(device=self.device)
         weight_tensors = FloatTensor(weights).to(device=self.device)
         # the following logic is the DDQN update
         # Then we get the predicted actions for the states that came next
         # (using the main network)
-        actions_for_next_states = [
-            self.top_k_actions_for_state(s)[0] for s in next_state_tensors
-        ]
-        actions_for_next_states_tensor = (
-            LongTensor(actions_for_next_states).reshape(-1, 1).to(device=self.device)
-        )
+        actions_for_next_states = [self.top_k_actions_for_state(s)[0] for s in next_state_tensors]
+        actions_for_next_states_tensor = LongTensor(actions_for_next_states).reshape(-1, 1).to(device=self.device)
         # Then we use them to get the estimated Q Values for these next states/actions,
         # according to the target network. Remember that the target network is a copy
         # of this one taken some steps ago
         next_q_values = target_network.forward(next_state_tensors)
         # now we get the q values for the actions that were predicted for the next state
         # we call detach() so no gradient will be backpropagated along this variable
-        next_q_values_for_actions = gather(
-            next_q_values, 1, actions_for_next_states_tensor
-        ).detach()
+        next_q_values_for_actions = gather(next_q_values, 1, actions_for_next_states_tensor).detach()
         # zero value for done timesteps
         next_q_values_for_actions[done_tensors] = 0
         # bellman equation
-        expected_q_values = (
-            self.discount_factor * next_q_values_for_actions + reward_tensors
-        )
+        expected_q_values = self.discount_factor * next_q_values_for_actions + reward_tensors
         # Then get the Q-Values of the main network for the selected actions
         q_values = gather(self.forward(state_tensors), 1, action_tensors)
         # And compare them (this is the time-difference or TD error)
@@ -371,22 +304,22 @@ tensor([[ 1,  1],
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork">BaseNetwork</a></li>
+<li><a title="deeprecsys.neural_networks.base_network.BaseNetwork" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork">BaseNetwork</a></li>
 <li>torch.nn.modules.module.Module</li>
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="deeprecsys.rl.neural_networks.dueling.DuelingDDQN.forward"><code class="name flex">
-<span>def <span class="ident">forward</span></span>(<span>self, state)</span>
+<dt id="deeprecsys.neural_networks.dueling.DuelingDDQN.forward"><code class="name flex">
+<span>def <span class="ident">forward</span></span>(<span>self, state: torch.Tensor) ‑> torch.Tensor</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculates the forward between the layers</p></div>
+<div class="desc"><p>Calculate the forward between the layers</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def forward(self, state):
-    &#34;&#34;&#34;Calculates the forward between the layers&#34;&#34;&#34;
+<pre><code class="python">def forward(self, state: Tensor) -&gt; Tensor:
+    &#34;&#34;&#34;Calculate the forward between the layers&#34;&#34;&#34;
     layer_1_out = functional.relu(self.fully_connected_1(state))
     layer_2_out = functional.relu(self.fully_connected_2(layer_1_out))
     value_of_state = self.value_subnet(layer_2_out)
@@ -394,73 +327,68 @@ tensor([[ 1,  1],
     # This is the Dueling DQN part
     # Combines V and A to get Q: Q(s,a) = V(s) + (A(s,a) - 1/|A| * sum A(s,a&#39;))
     if len(state.shape) == 2:
-        q_values = value_of_state + (
-            advantage_of_state - advantage_of_state.mean(dim=1, keepdim=True)
-        )
+        q_values = value_of_state + (advantage_of_state - advantage_of_state.mean(dim=1, keepdim=True))
     else:
         q_values = value_of_state + (advantage_of_state - advantage_of_state.mean())
     return q_values</code></pre>
 </details>
 </dd>
-<dt id="deeprecsys.rl.neural_networks.dueling.DuelingDDQN.get_q_values"><code class="name flex">
+<dt id="deeprecsys.neural_networks.dueling.DuelingDDQN.get_q_values"><code class="name flex">
 <span>def <span class="ident">get_q_values</span></span>(<span>self, state: Any) ‑> torch.Tensor</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Run the state through the network and return the Q-value for each action.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def get_q_values(self, state: Any) -&gt; Tensor:
+    &#34;&#34;&#34;Run the state through the network and return the Q-value for each action.&#34;&#34;&#34;
     if type(state) is tuple:
         state = array([ravel(s) for s in state])
     state_tensor = FloatTensor(state).to(device=self.device)
     return self.forward(state_tensor)</code></pre>
 </details>
 </dd>
-<dt id="deeprecsys.rl.neural_networks.dueling.DuelingDDQN.learn_with"><code class="name flex">
-<span>def <span class="ident">learn_with</span></span>(<span>self, buffer: <a title="deeprecsys.rl.experience_replay.priority_replay_buffer.PrioritizedExperienceReplayBuffer" href="../experience_replay/priority_replay_buffer.html#deeprecsys.rl.experience_replay.priority_replay_buffer.PrioritizedExperienceReplayBuffer">PrioritizedExperienceReplayBuffer</a>, target_network: torch.nn.modules.module.Module)</span>
+<dt id="deeprecsys.neural_networks.dueling.DuelingDDQN.learn_with"><code class="name flex">
+<span>def <span class="ident">learn_with</span></span>(<span>self, buffer: <a title="deeprecsys.rl.experience_replay.priority_replay_buffer.PrioritizedExperienceReplayBuffer" href="../rl/experience_replay/priority_replay_buffer.html#deeprecsys.rl.experience_replay.priority_replay_buffer.PrioritizedExperienceReplayBuffer">PrioritizedExperienceReplayBuffer</a>, target_network: torch.nn.modules.module.Module) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Train the target network using the replay buffer.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def learn_with(
-    self, buffer: PrioritizedExperienceReplayBuffer, target_network: Module
-):
+<pre><code class="python">def learn_with(self, buffer: PrioritizedExperienceReplayBuffer, target_network: Module) -&gt; None:
+    &#34;&#34;&#34;Train the target network using the replay buffer.&#34;&#34;&#34;
     experiences = buffer.sample_batch()
     self.optimizer.zero_grad()
-    td_error, weights = self._calculate_td_error_and_weigths(
-        experiences, target_network
-    )
+    td_error, weights = self._calculate_td_error_and_weigths(experiences, target_network)
     loss = (td_error.pow(2) * weights).mean().to(self.device)
     loss.backward()
     self.optimizer.step()
     # store loss in statistics
     if self.statistics:
         if self.device == &#34;cuda&#34;:
-            self.statistics.append_metric(
-                &#34;loss&#34;, float(loss.detach().cpu().numpy())
-            )
+            self.statistics.append_metric(&#34;loss&#34;, float(loss.detach().cpu().numpy()))
         else:
             self.statistics.append_metric(&#34;loss&#34;, float(loss.detach().numpy()))
     # update buffer priorities
-    errors_from_batch = td_error.detach().cpu().numpy()
+    errors_from_batch = td_error.detach().cpu().numpy().flatten()
     buffer.update_priorities(experiences, errors_from_batch)</code></pre>
 </details>
 </dd>
-<dt id="deeprecsys.rl.neural_networks.dueling.DuelingDDQN.top_k_actions_for_state"><code class="name flex">
+<dt id="deeprecsys.neural_networks.dueling.DuelingDDQN.top_k_actions_for_state"><code class="name flex">
 <span>def <span class="ident">top_k_actions_for_state</span></span>(<span>self, state: Any, k: int = 1) ‑> List[int]</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Get the top K actions ranked by their estimated Q-value.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; List[int]:
+    &#34;&#34;&#34;Get the top K actions ranked by their estimated Q-value.&#34;&#34;&#34;
     q_values = self.get_q_values(state)
     _, top_indices = q_values.topk(k=k)
     return [int(v) for v in top_indices.detach().numpy()]  # TODO: cpu() ?</code></pre>
@@ -469,12 +397,14 @@ tensor([[ 1,  1],
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork">BaseNetwork</a></b></code>:
+<li><code><b><a title="deeprecsys.neural_networks.base_network.BaseNetwork" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork">BaseNetwork</a></b></code>:
 <ul class="hlist">
-<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.load" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.load">load</a></code></li>
-<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.run_backpropagation" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.run_backpropagation">run_backpropagation</a></code></li>
-<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.save" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.save">save</a></code></li>
-<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.soft_parameter_update" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.soft_parameter_update">soft_parameter_update</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.add_to_tensorboard" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.add_to_tensorboard">add_to_tensorboard</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.disable_learning" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.disable_learning">disable_learning</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.load" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.load">load</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.run_backpropagation" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.run_backpropagation">run_backpropagation</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.save" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.save">save</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.soft_parameter_update" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.soft_parameter_update">soft_parameter_update</a></code></li>
 </ul>
 </li>
 </ul>
@@ -490,23 +420,18 @@ tensor([[ 1,  1],
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="deeprecsys.rl.neural_networks" href="index.html">deeprecsys.rl.neural_networks</a></code></li>
-</ul>
-</li>
-<li><h3><a href="#header-functions">Functions</a></h3>
-<ul class="">
-<li><code><a title="deeprecsys.rl.neural_networks.dueling.gather" href="#deeprecsys.rl.neural_networks.dueling.gather">gather</a></code></li>
+<li><code><a title="deeprecsys.neural_networks" href="index.html">deeprecsys.neural_networks</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="deeprecsys.rl.neural_networks.dueling.DuelingDDQN" href="#deeprecsys.rl.neural_networks.dueling.DuelingDDQN">DuelingDDQN</a></code></h4>
+<h4><code><a title="deeprecsys.neural_networks.dueling.DuelingDDQN" href="#deeprecsys.neural_networks.dueling.DuelingDDQN">DuelingDDQN</a></code></h4>
 <ul class="">
-<li><code><a title="deeprecsys.rl.neural_networks.dueling.DuelingDDQN.forward" href="#deeprecsys.rl.neural_networks.dueling.DuelingDDQN.forward">forward</a></code></li>
-<li><code><a title="deeprecsys.rl.neural_networks.dueling.DuelingDDQN.get_q_values" href="#deeprecsys.rl.neural_networks.dueling.DuelingDDQN.get_q_values">get_q_values</a></code></li>
-<li><code><a title="deeprecsys.rl.neural_networks.dueling.DuelingDDQN.learn_with" href="#deeprecsys.rl.neural_networks.dueling.DuelingDDQN.learn_with">learn_with</a></code></li>
-<li><code><a title="deeprecsys.rl.neural_networks.dueling.DuelingDDQN.top_k_actions_for_state" href="#deeprecsys.rl.neural_networks.dueling.DuelingDDQN.top_k_actions_for_state">top_k_actions_for_state</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.dueling.DuelingDDQN.forward" href="#deeprecsys.neural_networks.dueling.DuelingDDQN.forward">forward</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.dueling.DuelingDDQN.get_q_values" href="#deeprecsys.neural_networks.dueling.DuelingDDQN.get_q_values">get_q_values</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.dueling.DuelingDDQN.learn_with" href="#deeprecsys.neural_networks.dueling.DuelingDDQN.learn_with">learn_with</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.dueling.DuelingDDQN.top_k_actions_for_state" href="#deeprecsys.neural_networks.dueling.DuelingDDQN.top_k_actions_for_state">top_k_actions_for_state</a></code></li>
 </ul>
 </li>
 </ul>
@@ -515,7 +440,7 @@ tensor([[ 1,  1],
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>

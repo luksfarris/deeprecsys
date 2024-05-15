@@ -43,9 +43,7 @@ class DQNAgent(DecayingEpsilonGreedy):
             random_state,
         )
 
-        architecture = sequential_architecture(
-            [input_size] + hidden_layers + [output_size]
-        )
+        architecture = sequential_architecture([input_size] + hidden_layers + [output_size])
         self.network = DeepQNetwork(learning_rate, architecture, discount_factor)
         self.buffer = ExperienceReplayBuffer(
             ExperienceReplayBufferParameters(
@@ -88,9 +86,7 @@ class DQNAgent(DecayingEpsilonGreedy):
         """TODO"""
         return self.network.best_action_for_state(state)
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ) -> None:
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -> None:
         """TODO"""
         if done and self.buffer.ready_to_predict():
             self._decay()

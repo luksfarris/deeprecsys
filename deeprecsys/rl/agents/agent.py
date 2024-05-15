@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from gym import Space
+from gymnasium import Space
 
 
 class ReinforcementLearning(ABC):
@@ -16,15 +16,14 @@ class ReinforcementLearning(ABC):
         """Retrieve the next K best actions for this state."""
 
     @abstractmethod
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ) -> None:
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -> None:
         """Store an experience (used in case of experience replay buffers)"""
 
 
 class RandomAgent(ReinforcementLearning):
     """An agent that randomly samples actions, regardless of the
-    environment's state."""
+    environment's state.
+    """
 
     action_space: Space
 
@@ -42,8 +41,6 @@ class RandomAgent(ReinforcementLearning):
         """Randomly sample K actions from the action space."""
         return self.action_space.sample()
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ) -> None:
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -> None:
         """Ignore the experience because this agent doesn't have any experience replay."""
         pass

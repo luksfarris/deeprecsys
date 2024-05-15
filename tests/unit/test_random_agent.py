@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from gym import Space
-from gym.spaces.box import Box
-from gym.spaces.discrete import Discrete
+from gymnasium import Space
+from gymnasium.spaces.box import Box
+from gymnasium.spaces.discrete import Discrete
 
 from deeprecsys.rl.agents.agent import RandomAgent
 
@@ -24,11 +24,9 @@ def test_random_agent(action_space: Space, random_seed: None) -> None:
     # then the action is valid
     assert action is not None
     # when we generate another action from a new agent but the same seed
-    new_action = RandomAgent(action_space, random_state=random_seed).action_for_state(
-        None
-    )
+    new_action = RandomAgent(action_space, random_state=random_seed).action_for_state(None)
     # then the actions are identical
-    if type(action) == int:
+    if isinstance(action, int):
         assert action == new_action
     else:
         assert action.flatten().tolist() == new_action.flatten().tolist()

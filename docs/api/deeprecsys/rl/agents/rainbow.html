@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>deeprecsys.rl.agents.rainbow API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -26,28 +26,30 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from numpy.random import RandomState
-from typing import Any, Optional, List
+<pre><code class="python">from copy import deepcopy
+from typing import Any, List, Optional
+
 from numpy import arange
-from copy import deepcopy
-from deeprecsys.rl.neural_networks.dueling import DuelingDDQN
+from numpy.random import RandomState
+
+from deeprecsys.neural_networks.dueling import DuelingDDQN
+from deeprecsys.rl.agents.agent import ReinforcementLearning
+from deeprecsys.rl.experience_replay.buffer_parameters import (
+    ExperienceReplayBufferParameters,
+    PERBufferParameters,
+)
 from deeprecsys.rl.experience_replay.priority_replay_buffer import (
     PrioritizedExperienceReplayBuffer,
 )
-from deeprecsys.rl.experience_replay.buffer_parameters import (
-    PERBufferParameters,
-    ExperienceReplayBufferParameters,
-)
-from deeprecsys.rl.agents.agent import ReinforcementLearning
 from deeprecsys.rl.learning_statistics import LearningStatistics
 
 
 class RainbowDQNAgent(ReinforcementLearning):
-
     &#34;&#34;&#34;Instead of sampling randomly from the buffer we prioritize experiences with PER
     Instead of epsilon-greedy we use gaussian noisy layers for exploration
     Instead of the Q value we calculate Value and Advantage (Dueling DQN).
-    This implementation does not include the Categorical DQN part (yet).&#34;&#34;&#34;
+    This implementation does not include the Categorical DQN part (yet).
+    &#34;&#34;&#34;
 
     def __init__(
         self,
@@ -64,10 +66,12 @@ class RainbowDQNAgent(ReinforcementLearning):
         discount_factor: float = 0.99,
         learning_rate: float = 0.0001,
         hidden_layers: List[int] = None,
-        random_state: RandomState = RandomState(),
+        random_state: RandomState = None,
         statistics: Optional[LearningStatistics] = None,
     ):
-
+        &#34;&#34;&#34;Start the network and the buffer with the provided parameters.&#34;&#34;&#34;
+        if random_state is None:
+            random_state = RandomState()
         self.network = DuelingDDQN(
             n_input=input_size,
             n_output=output_size,
@@ -97,7 +101,7 @@ class RainbowDQNAgent(ReinforcementLearning):
         self.actions = arange(output_size)
         self.random_state = random_state
 
-    def _check_update_network(self):
+    def _check_update_network(self) -&gt; None:
         # we only start training the network once the buffer is ready
         # (the burn in is filled)
         if self.buffer.ready_to_predict():
@@ -110,6 +114,7 @@ class RainbowDQNAgent(ReinforcementLearning):
                 self.target_network.load_state_dict(self.network.state_dict())
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
+        &#34;&#34;&#34;Get the next k best actions for the given state&#34;&#34;&#34;
         state_flat = state.flatten()
         if self.buffer.ready_to_predict():
             actions = self.target_network.top_k_actions_for_state(state_flat, k=k)
@@ -119,11 +124,11 @@ class RainbowDQNAgent(ReinforcementLearning):
         return actions
 
     def action_for_state(self, state: Any) -&gt; Any:
+        &#34;&#34;&#34;Get the next best action for the given state.&#34;&#34;&#34;
         return self.top_k_actions_for_state(state, k=1)[0]
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+        &#34;&#34;&#34;Store the experience in the buffer&#34;&#34;&#34;
         state_flat = state.flatten()
         new_state_flat = new_state.flatten()
         self.buffer.store_experience(state_flat, action, reward, done, new_state_flat)</code></pre>
@@ -140,23 +145,24 @@ class RainbowDQNAgent(ReinforcementLearning):
 <dl>
 <dt id="deeprecsys.rl.agents.rainbow.RainbowDQNAgent"><code class="flex name class">
 <span>class <span class="ident">RainbowDQNAgent</span></span>
-<span>(</span><span>input_size: int, output_size: int, network_update_frequency: int = 5, network_sync_frequency: int = 200, priority_importance: float = 0.6, priority_weigth_growth: float = 0.001, buffer_size: int = 10000, buffer_burn_in: int = 1000, batch_size: int = 32, noise_sigma: float = 0.017, discount_factor: float = 0.99, learning_rate: float = 0.0001, hidden_layers: List[int] = None, random_state: numpy.random.mtrand.RandomState = RandomState(MT19937), statistics: Union[<a title="deeprecsys.rl.learning_statistics.LearningStatistics" href="../learning_statistics.html#deeprecsys.rl.learning_statistics.LearningStatistics">LearningStatistics</a>, NoneType] = None)</span>
+<span>(</span><span>input_size: int, output_size: int, network_update_frequency: int = 5, network_sync_frequency: int = 200, priority_importance: float = 0.6, priority_weigth_growth: float = 0.001, buffer_size: int = 10000, buffer_burn_in: int = 1000, batch_size: int = 32, noise_sigma: float = 0.017, discount_factor: float = 0.99, learning_rate: float = 0.0001, hidden_layers: List[int] = None, random_state: numpy.random.mtrand.RandomState = None, statistics: Optional[<a title="deeprecsys.rl.learning_statistics.LearningStatistics" href="../learning_statistics.html#deeprecsys.rl.learning_statistics.LearningStatistics">LearningStatistics</a>] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Instead of sampling randomly from the buffer we prioritize experiences with PER
 Instead of epsilon-greedy we use gaussian noisy layers for exploration
 Instead of the Q value we calculate Value and Advantage (Dueling DQN).
-This implementation does not include the Categorical DQN part (yet).</p></div>
+This implementation does not include the Categorical DQN part (yet).</p>
+<p>Start the network and the buffer with the provided parameters.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class RainbowDQNAgent(ReinforcementLearning):
-
     &#34;&#34;&#34;Instead of sampling randomly from the buffer we prioritize experiences with PER
     Instead of epsilon-greedy we use gaussian noisy layers for exploration
     Instead of the Q value we calculate Value and Advantage (Dueling DQN).
-    This implementation does not include the Categorical DQN part (yet).&#34;&#34;&#34;
+    This implementation does not include the Categorical DQN part (yet).
+    &#34;&#34;&#34;
 
     def __init__(
         self,
@@ -173,10 +179,12 @@ This implementation does not include the Categorical DQN part (yet).</p></div>
         discount_factor: float = 0.99,
         learning_rate: float = 0.0001,
         hidden_layers: List[int] = None,
-        random_state: RandomState = RandomState(),
+        random_state: RandomState = None,
         statistics: Optional[LearningStatistics] = None,
     ):
-
+        &#34;&#34;&#34;Start the network and the buffer with the provided parameters.&#34;&#34;&#34;
+        if random_state is None:
+            random_state = RandomState()
         self.network = DuelingDDQN(
             n_input=input_size,
             n_output=output_size,
@@ -206,7 +214,7 @@ This implementation does not include the Categorical DQN part (yet).</p></div>
         self.actions = arange(output_size)
         self.random_state = random_state
 
-    def _check_update_network(self):
+    def _check_update_network(self) -&gt; None:
         # we only start training the network once the buffer is ready
         # (the burn in is filled)
         if self.buffer.ready_to_predict():
@@ -219,6 +227,7 @@ This implementation does not include the Categorical DQN part (yet).</p></div>
                 self.target_network.load_state_dict(self.network.state_dict())
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
+        &#34;&#34;&#34;Get the next k best actions for the given state&#34;&#34;&#34;
         state_flat = state.flatten()
         if self.buffer.ready_to_predict():
             actions = self.target_network.top_k_actions_for_state(state_flat, k=k)
@@ -228,11 +237,11 @@ This implementation does not include the Categorical DQN part (yet).</p></div>
         return actions
 
     def action_for_state(self, state: Any) -&gt; Any:
+        &#34;&#34;&#34;Get the next best action for the given state.&#34;&#34;&#34;
         return self.top_k_actions_for_state(state, k=1)[0]
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+        &#34;&#34;&#34;Store the experience in the buffer&#34;&#34;&#34;
         state_flat = state.flatten()
         new_state_flat = new_state.flatten()
         self.buffer.store_experience(state_flat, action, reward, done, new_state_flat)</code></pre>
@@ -248,27 +257,27 @@ This implementation does not include the Categorical DQN part (yet).</p></div>
 <span>def <span class="ident">action_for_state</span></span>(<span>self, state: Any) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Get the next best action for the given state.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def action_for_state(self, state: Any) -&gt; Any:
+    &#34;&#34;&#34;Get the next best action for the given state.&#34;&#34;&#34;
     return self.top_k_actions_for_state(state, k=1)[0]</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.agents.rainbow.RainbowDQNAgent.store_experience"><code class="name flex">
-<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, new_state: Any)</span>
+<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, new_state: Any) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Store the experience in the buffer</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def store_experience(
-    self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-):
+<pre><code class="python">def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+    &#34;&#34;&#34;Store the experience in the buffer&#34;&#34;&#34;
     state_flat = state.flatten()
     new_state_flat = new_state.flatten()
     self.buffer.store_experience(state_flat, action, reward, done, new_state_flat)</code></pre>
@@ -278,12 +287,13 @@ This implementation does not include the Categorical DQN part (yet).</p></div>
 <span>def <span class="ident">top_k_actions_for_state</span></span>(<span>self, state: Any, k: int = 1) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Get the next k best actions for the given state</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
+    &#34;&#34;&#34;Get the next k best actions for the given state&#34;&#34;&#34;
     state_flat = state.flatten()
     if self.buffer.ready_to_predict():
         actions = self.target_network.top_k_actions_for_state(state_flat, k=k)
@@ -325,7 +335,7 @@ This implementation does not include the Categorical DQN part (yet).</p></div>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>

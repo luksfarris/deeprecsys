@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>deeprecsys.rl.agents.soft_actor_critic API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -27,19 +27,21 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">from copy import deepcopy
+from typing import Any, Optional
+
 import torch
-from torch import FloatTensor, BoolTensor
-from typing import Any
-from gym.spaces import Space
-from deeprecsys.rl.neural_networks.gaussian_actor import GaussianActor
-from deeprecsys.rl.neural_networks.q_value_estimator import TwinnedQValueEstimator
+from gymnasium.spaces import Discrete
+from torch import BoolTensor, FloatTensor
+
+from deeprecsys.neural_networks.gaussian_actor import GaussianActor
+from deeprecsys.neural_networks.q_value_estimator import TwinnedQValueEstimator
 from deeprecsys.rl.agents.agent import ReinforcementLearning
-from deeprecsys.rl.experience_replay.priority_replay_buffer import (
-    PrioritizedExperienceReplayBuffer,
-)
 from deeprecsys.rl.experience_replay.buffer_parameters import (
     ExperienceReplayBufferParameters,
     PERBufferParameters,
+)
+from deeprecsys.rl.experience_replay.priority_replay_buffer import (
+    PrioritizedExperienceReplayBuffer,
 )
 
 
@@ -47,11 +49,12 @@ class SoftActorCritic(ReinforcementLearning):
     &#34;&#34;&#34;TODO: there&#39;s things to fix in this agent. It needs temperature
     optimization, and replace the current q-value estimator with the
     Q-value + value + value_target estimators, like described here
-    https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html&#34;&#34;&#34;
+    https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html
+    &#34;&#34;&#34;
 
     def __init__(
         self,
-        action_space: Space,
+        action_space: Discrete,
         state_size: int,
         timesteps_to_start_predicting: int = 256,
         learning_rate: float = 0.0001,
@@ -59,10 +62,14 @@ class SoftActorCritic(ReinforcementLearning):
         entropy_coefficient: float = 0.2,
         target_update_interval: int = 2,
         discount_factor: float = 0.99,
-        buffer_parameters=ExperienceReplayBufferParameters(),
-        per_parameters=PERBufferParameters(),
+        buffer_parameters: Optional[ExperienceReplayBufferParameters] = None,
+        per_parameters: Optional[PERBufferParameters] = None,
     ):
-
+        &#34;&#34;&#34;Initialize the agent and the buffer with the given parameters.&#34;&#34;&#34;
+        if buffer_parameters is None:
+            buffer_parameters = ExperienceReplayBufferParameters()
+        if per_parameters is None:
+            per_parameters = PERBufferParameters()
         self.action_space = action_space
         n_actions = 1  # TODO: slate size
         self.actor = GaussianActor(
@@ -72,13 +79,11 @@ class SoftActorCritic(ReinforcementLearning):
             entropy_coefficient=entropy_coefficient,
             discount_factor=discount_factor,
         )
-        self.critic = TwinnedQValueEstimator(
-            inputs=state_size + 1, learning_rate=learning_rate
-        )
+        self.critic = TwinnedQValueEstimator(inputs=state_size + 1, learning_rate=learning_rate)
         self.target_critic = deepcopy(self.critic)
         self.buffer = PrioritizedExperienceReplayBuffer(
-            buffer_parameters=ExperienceReplayBufferParameters(),
-            per_parameters=PERBufferParameters(),
+            buffer_parameters=buffer_parameters,
+            per_parameters=per_parameters,
         )
 
         # disable gradient calculations of the target network
@@ -91,26 +96,26 @@ class SoftActorCritic(ReinforcementLearning):
         self.target_update_interval = target_update_interval
         self.gamma = discount_factor
 
-    def should_update_network(self):
+    def should_update_network(self) -&gt; bool:
+        &#34;&#34;&#34;Check if the buffer is ready to predict and if enough timesteps have passed.&#34;&#34;&#34;
         return (
-            self.timesteps &gt;= self.timesteps_to_start_predicting
-            and self.buffer.ready_to_predict()  # noqa
+            self.timesteps &gt;= self.timesteps_to_start_predicting and self.buffer.ready_to_predict()  # noqa
         )
 
     def action_for_state(self, state: Any) -&gt; Any:
+        &#34;&#34;&#34;Before we&#39;re ready to start predicting, we return random actions (explore).&#34;&#34;&#34;
         if self.timesteps &lt; self.timesteps_to_start_predicting:
             action = self.action_space.sample()
         else:
             action = self.explore(state)
         return int(action)
 
-    def top_k_actions_for_state(self, state, k):
-        # TODO:
+    def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
         pass
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+        &#34;&#34;&#34;Store the experience in the buffer.&#34;&#34;&#34;
         self.timesteps += 1
         state_flat = state.flatten()
         new_state_flat = new_state.flatten()
@@ -119,7 +124,7 @@ class SoftActorCritic(ReinforcementLearning):
             self.learn()
 
     def explore(self, state: Any) -&gt; Any:
-        # act with gaussian randomness
+        &#34;&#34;&#34;Act with gaussian randomness&#34;&#34;&#34;
         with torch.no_grad():
             action, _, _ = self.actor.predict(state.reshape(1, -1))
         action_array = action.cpu().numpy().reshape(-1)
@@ -127,16 +132,16 @@ class SoftActorCritic(ReinforcementLearning):
         return action_array[0].clip(0, n_actions - 1).round()
 
     def exploit(self, state: Any) -&gt; Any:
-        # act without randomness
+        &#34;&#34;&#34;Act without randomness&#34;&#34;&#34;
         with torch.no_grad():
             _, _, action = self.actor.predict(state.reshape(1, -1))
         action_array = action.cpu().numpy().reshape(-1)
         n_actions = self.action_space.n
         return action_array[0].clip(0, n_actions - 1).round()
 
-    def learn(self):
+    def learn(self) -&gt; None:
+        &#34;&#34;&#34;Run the backpropagation and update the buffer priorities&#34;&#34;&#34;
         self.learning_steps += 1
-
         if self.learning_steps % self.target_update_interval == 0:
             # instead of updating the target network &#34;the hard way&#34;, we use a Tau
             # parameter as a weighting factor to update the weights as an
@@ -146,9 +151,7 @@ class SoftActorCritic(ReinforcementLearning):
 
         # batch with indices and priority weights
         batch = self.buffer.sample_batch()
-        states, actions, rewards, dones, next_states, weights, samples = [
-            i for i in batch
-        ]
+        states, actions, rewards, dones, next_states, weights, samples = [i for i in batch]
         # convert to tensors
         device = self.critic.device
         state_tensors = FloatTensor(states).to(device=device)
@@ -192,13 +195,14 @@ class SoftActorCritic(ReinforcementLearning):
 <dl>
 <dt id="deeprecsys.rl.agents.soft_actor_critic.SoftActorCritic"><code class="flex name class">
 <span>class <span class="ident">SoftActorCritic</span></span>
-<span>(</span><span>action_space: gym.spaces.space.Space, state_size: int, timesteps_to_start_predicting: int = 256, learning_rate: float = 0.0001, soft_target_update_rate: float = 0.005, entropy_coefficient: float = 0.2, target_update_interval: int = 2, discount_factor: float = 0.99, buffer_parameters=&lt;deeprecsys.rl.experience_replay.buffer_parameters.ExperienceReplayBufferParameters object&gt;, per_parameters=&lt;deeprecsys.rl.experience_replay.buffer_parameters.PERBufferParameters object&gt;)</span>
+<span>(</span><span>action_space: gymnasium.spaces.discrete.Discrete, state_size: int, timesteps_to_start_predicting: int = 256, learning_rate: float = 0.0001, soft_target_update_rate: float = 0.005, entropy_coefficient: float = 0.2, target_update_interval: int = 2, discount_factor: float = 0.99, buffer_parameters: Optional[<a title="deeprecsys.rl.experience_replay.buffer_parameters.ExperienceReplayBufferParameters" href="../experience_replay/buffer_parameters.html#deeprecsys.rl.experience_replay.buffer_parameters.ExperienceReplayBufferParameters">ExperienceReplayBufferParameters</a>] = None, per_parameters: Optional[<a title="deeprecsys.rl.experience_replay.buffer_parameters.PERBufferParameters" href="../experience_replay/buffer_parameters.html#deeprecsys.rl.experience_replay.buffer_parameters.PERBufferParameters">PERBufferParameters</a>] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>TODO: there's things to fix in this agent. It needs temperature
 optimization, and replace the current q-value estimator with the
 Q-value + value + value_target estimators, like described here
-<a href="https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html">https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html</a></p></div>
+<a href="https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html">https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html</a></p>
+<p>Initialize the agent and the buffer with the given parameters.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -207,11 +211,12 @@ Q-value + value + value_target estimators, like described here
     &#34;&#34;&#34;TODO: there&#39;s things to fix in this agent. It needs temperature
     optimization, and replace the current q-value estimator with the
     Q-value + value + value_target estimators, like described here
-    https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html&#34;&#34;&#34;
+    https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html
+    &#34;&#34;&#34;
 
     def __init__(
         self,
-        action_space: Space,
+        action_space: Discrete,
         state_size: int,
         timesteps_to_start_predicting: int = 256,
         learning_rate: float = 0.0001,
@@ -219,10 +224,14 @@ Q-value + value + value_target estimators, like described here
         entropy_coefficient: float = 0.2,
         target_update_interval: int = 2,
         discount_factor: float = 0.99,
-        buffer_parameters=ExperienceReplayBufferParameters(),
-        per_parameters=PERBufferParameters(),
+        buffer_parameters: Optional[ExperienceReplayBufferParameters] = None,
+        per_parameters: Optional[PERBufferParameters] = None,
     ):
-
+        &#34;&#34;&#34;Initialize the agent and the buffer with the given parameters.&#34;&#34;&#34;
+        if buffer_parameters is None:
+            buffer_parameters = ExperienceReplayBufferParameters()
+        if per_parameters is None:
+            per_parameters = PERBufferParameters()
         self.action_space = action_space
         n_actions = 1  # TODO: slate size
         self.actor = GaussianActor(
@@ -232,13 +241,11 @@ Q-value + value + value_target estimators, like described here
             entropy_coefficient=entropy_coefficient,
             discount_factor=discount_factor,
         )
-        self.critic = TwinnedQValueEstimator(
-            inputs=state_size + 1, learning_rate=learning_rate
-        )
+        self.critic = TwinnedQValueEstimator(inputs=state_size + 1, learning_rate=learning_rate)
         self.target_critic = deepcopy(self.critic)
         self.buffer = PrioritizedExperienceReplayBuffer(
-            buffer_parameters=ExperienceReplayBufferParameters(),
-            per_parameters=PERBufferParameters(),
+            buffer_parameters=buffer_parameters,
+            per_parameters=per_parameters,
         )
 
         # disable gradient calculations of the target network
@@ -251,26 +258,26 @@ Q-value + value + value_target estimators, like described here
         self.target_update_interval = target_update_interval
         self.gamma = discount_factor
 
-    def should_update_network(self):
+    def should_update_network(self) -&gt; bool:
+        &#34;&#34;&#34;Check if the buffer is ready to predict and if enough timesteps have passed.&#34;&#34;&#34;
         return (
-            self.timesteps &gt;= self.timesteps_to_start_predicting
-            and self.buffer.ready_to_predict()  # noqa
+            self.timesteps &gt;= self.timesteps_to_start_predicting and self.buffer.ready_to_predict()  # noqa
         )
 
     def action_for_state(self, state: Any) -&gt; Any:
+        &#34;&#34;&#34;Before we&#39;re ready to start predicting, we return random actions (explore).&#34;&#34;&#34;
         if self.timesteps &lt; self.timesteps_to_start_predicting:
             action = self.action_space.sample()
         else:
             action = self.explore(state)
         return int(action)
 
-    def top_k_actions_for_state(self, state, k):
-        # TODO:
+    def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
         pass
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+        &#34;&#34;&#34;Store the experience in the buffer.&#34;&#34;&#34;
         self.timesteps += 1
         state_flat = state.flatten()
         new_state_flat = new_state.flatten()
@@ -279,7 +286,7 @@ Q-value + value + value_target estimators, like described here
             self.learn()
 
     def explore(self, state: Any) -&gt; Any:
-        # act with gaussian randomness
+        &#34;&#34;&#34;Act with gaussian randomness&#34;&#34;&#34;
         with torch.no_grad():
             action, _, _ = self.actor.predict(state.reshape(1, -1))
         action_array = action.cpu().numpy().reshape(-1)
@@ -287,16 +294,16 @@ Q-value + value + value_target estimators, like described here
         return action_array[0].clip(0, n_actions - 1).round()
 
     def exploit(self, state: Any) -&gt; Any:
-        # act without randomness
+        &#34;&#34;&#34;Act without randomness&#34;&#34;&#34;
         with torch.no_grad():
             _, _, action = self.actor.predict(state.reshape(1, -1))
         action_array = action.cpu().numpy().reshape(-1)
         n_actions = self.action_space.n
         return action_array[0].clip(0, n_actions - 1).round()
 
-    def learn(self):
+    def learn(self) -&gt; None:
+        &#34;&#34;&#34;Run the backpropagation and update the buffer priorities&#34;&#34;&#34;
         self.learning_steps += 1
-
         if self.learning_steps % self.target_update_interval == 0:
             # instead of updating the target network &#34;the hard way&#34;, we use a Tau
             # parameter as a weighting factor to update the weights as an
@@ -306,9 +313,7 @@ Q-value + value + value_target estimators, like described here
 
         # batch with indices and priority weights
         batch = self.buffer.sample_batch()
-        states, actions, rewards, dones, next_states, weights, samples = [
-            i for i in batch
-        ]
+        states, actions, rewards, dones, next_states, weights, samples = [i for i in batch]
         # convert to tensors
         device = self.critic.device
         state_tensors = FloatTensor(states).to(device=device)
@@ -351,12 +356,13 @@ Q-value + value + value_target estimators, like described here
 <span>def <span class="ident">action_for_state</span></span>(<span>self, state: Any) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Before we're ready to start predicting, we return random actions (explore).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def action_for_state(self, state: Any) -&gt; Any:
+    &#34;&#34;&#34;Before we&#39;re ready to start predicting, we return random actions (explore).&#34;&#34;&#34;
     if self.timesteps &lt; self.timesteps_to_start_predicting:
         action = self.action_space.sample()
     else:
@@ -368,13 +374,13 @@ Q-value + value + value_target estimators, like described here
 <span>def <span class="ident">exploit</span></span>(<span>self, state: Any) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Act without randomness</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def exploit(self, state: Any) -&gt; Any:
-    # act without randomness
+    &#34;&#34;&#34;Act without randomness&#34;&#34;&#34;
     with torch.no_grad():
         _, _, action = self.actor.predict(state.reshape(1, -1))
     action_array = action.cpu().numpy().reshape(-1)
@@ -386,13 +392,13 @@ Q-value + value + value_target estimators, like described here
 <span>def <span class="ident">explore</span></span>(<span>self, state: Any) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Act with gaussian randomness</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def explore(self, state: Any) -&gt; Any:
-    # act with gaussian randomness
+    &#34;&#34;&#34;Act with gaussian randomness&#34;&#34;&#34;
     with torch.no_grad():
         action, _, _ = self.actor.predict(state.reshape(1, -1))
     action_array = action.cpu().numpy().reshape(-1)
@@ -401,17 +407,17 @@ Q-value + value + value_target estimators, like described here
 </details>
 </dd>
 <dt id="deeprecsys.rl.agents.soft_actor_critic.SoftActorCritic.learn"><code class="name flex">
-<span>def <span class="ident">learn</span></span>(<span>self)</span>
+<span>def <span class="ident">learn</span></span>(<span>self) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Run the backpropagation and update the buffer priorities</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def learn(self):
+<pre><code class="python">def learn(self) -&gt; None:
+    &#34;&#34;&#34;Run the backpropagation and update the buffer priorities&#34;&#34;&#34;
     self.learning_steps += 1
-
     if self.learning_steps % self.target_update_interval == 0:
         # instead of updating the target network &#34;the hard way&#34;, we use a Tau
         # parameter as a weighting factor to update the weights as an
@@ -421,9 +427,7 @@ Q-value + value + value_target estimators, like described here
 
     # batch with indices and priority weights
     batch = self.buffer.sample_batch()
-    states, actions, rewards, dones, next_states, weights, samples = [
-        i for i in batch
-    ]
+    states, actions, rewards, dones, next_states, weights, samples = [i for i in batch]
     # convert to tensors
     device = self.critic.device
     state_tensors = FloatTensor(states).to(device=device)
@@ -457,33 +461,32 @@ Q-value + value + value_target estimators, like described here
 </details>
 </dd>
 <dt id="deeprecsys.rl.agents.soft_actor_critic.SoftActorCritic.should_update_network"><code class="name flex">
-<span>def <span class="ident">should_update_network</span></span>(<span>self)</span>
+<span>def <span class="ident">should_update_network</span></span>(<span>self) ‑> bool</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Check if the buffer is ready to predict and if enough timesteps have passed.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def should_update_network(self):
+<pre><code class="python">def should_update_network(self) -&gt; bool:
+    &#34;&#34;&#34;Check if the buffer is ready to predict and if enough timesteps have passed.&#34;&#34;&#34;
     return (
-        self.timesteps &gt;= self.timesteps_to_start_predicting
-        and self.buffer.ready_to_predict()  # noqa
+        self.timesteps &gt;= self.timesteps_to_start_predicting and self.buffer.ready_to_predict()  # noqa
     )</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.agents.soft_actor_critic.SoftActorCritic.store_experience"><code class="name flex">
-<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, new_state: Any)</span>
+<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, new_state: Any) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Store the experience in the buffer.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def store_experience(
-    self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-):
+<pre><code class="python">def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+    &#34;&#34;&#34;Store the experience in the buffer.&#34;&#34;&#34;
     self.timesteps += 1
     state_flat = state.flatten()
     new_state_flat = new_state.flatten()
@@ -493,16 +496,16 @@ Q-value + value + value_target estimators, like described here
 </details>
 </dd>
 <dt id="deeprecsys.rl.agents.soft_actor_critic.SoftActorCritic.top_k_actions_for_state"><code class="name flex">
-<span>def <span class="ident">top_k_actions_for_state</span></span>(<span>self, state, k)</span>
+<span>def <span class="ident">top_k_actions_for_state</span></span>(<span>self, state: Any, k: int = 1) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>TODO</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def top_k_actions_for_state(self, state, k):
-    # TODO:
+<pre><code class="python">def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
+    &#34;&#34;&#34;TODO&#34;&#34;&#34;
     pass</code></pre>
 </details>
 </dd>
@@ -542,7 +545,7 @@ Q-value + value + value_target estimators, like described here
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>

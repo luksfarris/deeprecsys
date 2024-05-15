@@ -11,7 +11,8 @@ from deeprecsys.neural_networks.deep_q_network import sequential_architecture
 
 class ValueEstimator(BaseNetwork):
     """Estimates the value function: the expected return of being in a
-    particular state"""
+    particular state
+    """
 
     def __init__(
         self,
@@ -22,9 +23,7 @@ class ValueEstimator(BaseNetwork):
     ):
         """Create the network with the given parameters. The output should always be one."""
         super().__init__()
-        self.model = sequential_architecture(
-            [input_size] + hidden_layers + [output_size]
-        )
+        self.model = sequential_architecture([input_size] + hidden_layers + [output_size])
         self.optimizer = Adam(self.parameters(), lr=learning_rate)
         if self.device == "cuda":
             self.model.cuda()

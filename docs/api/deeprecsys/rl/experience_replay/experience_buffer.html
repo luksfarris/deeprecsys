@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>deeprecsys.rl.experience_replay.experience_buffer API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -27,71 +27,72 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">from abc import ABC, abstractmethod
-from collections import namedtuple, deque
-from typing import List, Tuple, Any
+from collections import deque, namedtuple
+from typing import Any, List, Tuple
+
 from deeprecsys.rl.experience_replay.buffer_parameters import (
     ExperienceReplayBufferParameters,
 )
 
-Experience = namedtuple(
+Experience = namedtuple(  # type: ignore
     &#34;Experience&#34;, field_names=[&#34;state&#34;, &#34;action&#34;, &#34;reward&#34;, &#34;done&#34;, &#34;next_state&#34;]
 )
 
 
 class ExperienceBuffer(ABC):
+    &#34;&#34;&#34;Abstract class encapsulating common aspects of an experience replay buffer.&#34;&#34;&#34;
+
     @abstractmethod
     def ready_to_predict(self) -&gt; bool:
-        pass
+        &#34;&#34;&#34;Whether enough experiences were collected&#34;&#34;&#34;
 
     @abstractmethod
     def sample_batch(self) -&gt; List[Tuple]:
-        pass
+        &#34;&#34;&#34;Sample a batch of experiences from the buffer.&#34;&#34;&#34;
 
     @abstractmethod
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, next_state: Any
-    ):
-        pass
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, next_state: Any) -&gt; None:
+        &#34;&#34;&#34;Store an experience in the buffer.&#34;&#34;&#34;
 
 
 class ExperienceReplayBuffer(ExperienceBuffer):
+    &#34;&#34;&#34;Traditional experience replay buffer. Experiences are sampled randomly without
+    replacements within batches. Different batches may contain the same experience.
+    &#34;&#34;&#34;
+
     def __init__(
         self,
-        parameters=ExperienceReplayBufferParameters(),
+        parameters: ExperienceReplayBufferParameters = None,
     ):
-        self.minimum_experiences_to_start_predicting = (
-            parameters.minimum_experiences_to_start_predicting
-        )
+        &#34;&#34;&#34;Initialize the buffer with the provided parameters.&#34;&#34;&#34;
+        if not parameters:
+            parameters = ExperienceReplayBufferParameters()
+        self.minimum_experiences_to_start_predicting = parameters.minimum_experiences_to_start_predicting
         self.random_state = parameters.random_state
         # create double ended queue to store the experiences
-        self.experience_queue = deque(maxlen=parameters.max_experiences)
+        self.experience_queue: List = list(deque(maxlen=parameters.max_experiences))
         self.batch_size = parameters.batch_size
 
     def sample_batch(self) -&gt; List[Tuple]:
-        &#34;&#34;&#34; Samples a given number of experiences from the queue &#34;&#34;&#34;
+        &#34;&#34;&#34;Sample a given number of experiences from the queue&#34;&#34;&#34;
         # samples the index of `batch_size` different experiences from the replay memory
-        samples = self.random_state.choice(
-            len(self.experience_queue), self.batch_size, replace=False
-        )
+        samples = self.random_state.choice(len(self.experience_queue), self.batch_size, replace=False)
         # get the experiences
         experiences = [self.experience_queue[i] for i in samples]
         # returns a flattened list of the samples
-        return zip(*experiences)
+        return zip(*experiences, strict=False)  # type: ignore
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, next_state: Any
-    ):
-        &#34;&#34;&#34; Stores a new experience in the queue &#34;&#34;&#34;
-        experience = Experience(state, action, reward, done, next_state)
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, next_state: Any) -&gt; None:
+        &#34;&#34;&#34;Store a new experience in the queue&#34;&#34;&#34;
+        experience = Experience(state, action, reward, done, next_state)  # type: ignore
         # append to the right (end) of the queue
         self.experience_queue.append(experience)
 
-    def ready_to_predict(self):
-        &#34;&#34;&#34;Returns true only if we had enough experiences to start predicting
-        (measured by the burn in)&#34;&#34;&#34;
-        return (
-            len(self.experience_queue) &gt;= self.minimum_experiences_to_start_predicting
-        )</code></pre>
+    def ready_to_predict(self) -&gt; bool:
+        &#34;&#34;&#34;Return true only if we had enough experiences to start predicting
+        (measured by the burn in)
+        &#34;&#34;&#34;
+        return len(self.experience_queue) &gt;= self.minimum_experiences_to_start_predicting</code></pre>
 </details>
 </section>
 <section>
@@ -141,26 +142,25 @@ class ExperienceReplayBuffer(ExperienceBuffer):
 <span>class <span class="ident">ExperienceBuffer</span></span>
 </code></dt>
 <dd>
-<div class="desc"><p>Helper class that provides a standard way to create an ABC using
-inheritance.</p></div>
+<div class="desc"><p>Abstract class encapsulating common aspects of an experience replay buffer.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ExperienceBuffer(ABC):
+    &#34;&#34;&#34;Abstract class encapsulating common aspects of an experience replay buffer.&#34;&#34;&#34;
+
     @abstractmethod
     def ready_to_predict(self) -&gt; bool:
-        pass
+        &#34;&#34;&#34;Whether enough experiences were collected&#34;&#34;&#34;
 
     @abstractmethod
     def sample_batch(self) -&gt; List[Tuple]:
-        pass
+        &#34;&#34;&#34;Sample a batch of experiences from the buffer.&#34;&#34;&#34;
 
     @abstractmethod
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, next_state: Any
-    ):
-        pass</code></pre>
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, next_state: Any) -&gt; None:
+        &#34;&#34;&#34;Store an experience in the buffer.&#34;&#34;&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -176,97 +176,96 @@ inheritance.</p></div>
 <span>def <span class="ident">ready_to_predict</span></span>(<span>self) ‑> bool</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Whether enough experiences were collected</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@abstractmethod
 def ready_to_predict(self) -&gt; bool:
-    pass</code></pre>
+    &#34;&#34;&#34;Whether enough experiences were collected&#34;&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.experience_replay.experience_buffer.ExperienceBuffer.sample_batch"><code class="name flex">
 <span>def <span class="ident">sample_batch</span></span>(<span>self) ‑> List[Tuple]</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Sample a batch of experiences from the buffer.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@abstractmethod
 def sample_batch(self) -&gt; List[Tuple]:
-    pass</code></pre>
+    &#34;&#34;&#34;Sample a batch of experiences from the buffer.&#34;&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.experience_replay.experience_buffer.ExperienceBuffer.store_experience"><code class="name flex">
-<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, next_state: Any)</span>
+<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, next_state: Any) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Store an experience in the buffer.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@abstractmethod
-def store_experience(
-    self, state: Any, action: Any, reward: float, done: bool, next_state: Any
-):
-    pass</code></pre>
+def store_experience(self, state: Any, action: Any, reward: float, done: bool, next_state: Any) -&gt; None:
+    &#34;&#34;&#34;Store an experience in the buffer.&#34;&#34;&#34;</code></pre>
 </details>
 </dd>
 </dl>
 </dd>
 <dt id="deeprecsys.rl.experience_replay.experience_buffer.ExperienceReplayBuffer"><code class="flex name class">
 <span>class <span class="ident">ExperienceReplayBuffer</span></span>
-<span>(</span><span>parameters=&lt;deeprecsys.rl.experience_replay.buffer_parameters.ExperienceReplayBufferParameters object&gt;)</span>
+<span>(</span><span>parameters: <a title="deeprecsys.rl.experience_replay.buffer_parameters.ExperienceReplayBufferParameters" href="buffer_parameters.html#deeprecsys.rl.experience_replay.buffer_parameters.ExperienceReplayBufferParameters">ExperienceReplayBufferParameters</a> = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Helper class that provides a standard way to create an ABC using
-inheritance.</p></div>
+<div class="desc"><p>Traditional experience replay buffer. Experiences are sampled randomly without
+replacements within batches. Different batches may contain the same experience.</p>
+<p>Initialize the buffer with the provided parameters.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ExperienceReplayBuffer(ExperienceBuffer):
+    &#34;&#34;&#34;Traditional experience replay buffer. Experiences are sampled randomly without
+    replacements within batches. Different batches may contain the same experience.
+    &#34;&#34;&#34;
+
     def __init__(
         self,
-        parameters=ExperienceReplayBufferParameters(),
+        parameters: ExperienceReplayBufferParameters = None,
     ):
-        self.minimum_experiences_to_start_predicting = (
-            parameters.minimum_experiences_to_start_predicting
-        )
+        &#34;&#34;&#34;Initialize the buffer with the provided parameters.&#34;&#34;&#34;
+        if not parameters:
+            parameters = ExperienceReplayBufferParameters()
+        self.minimum_experiences_to_start_predicting = parameters.minimum_experiences_to_start_predicting
         self.random_state = parameters.random_state
         # create double ended queue to store the experiences
-        self.experience_queue = deque(maxlen=parameters.max_experiences)
+        self.experience_queue: List = list(deque(maxlen=parameters.max_experiences))
         self.batch_size = parameters.batch_size
 
     def sample_batch(self) -&gt; List[Tuple]:
-        &#34;&#34;&#34; Samples a given number of experiences from the queue &#34;&#34;&#34;
+        &#34;&#34;&#34;Sample a given number of experiences from the queue&#34;&#34;&#34;
         # samples the index of `batch_size` different experiences from the replay memory
-        samples = self.random_state.choice(
-            len(self.experience_queue), self.batch_size, replace=False
-        )
+        samples = self.random_state.choice(len(self.experience_queue), self.batch_size, replace=False)
         # get the experiences
         experiences = [self.experience_queue[i] for i in samples]
         # returns a flattened list of the samples
-        return zip(*experiences)
+        return zip(*experiences, strict=False)  # type: ignore
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, next_state: Any
-    ):
-        &#34;&#34;&#34; Stores a new experience in the queue &#34;&#34;&#34;
-        experience = Experience(state, action, reward, done, next_state)
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, next_state: Any) -&gt; None:
+        &#34;&#34;&#34;Store a new experience in the queue&#34;&#34;&#34;
+        experience = Experience(state, action, reward, done, next_state)  # type: ignore
         # append to the right (end) of the queue
         self.experience_queue.append(experience)
 
-    def ready_to_predict(self):
-        &#34;&#34;&#34;Returns true only if we had enough experiences to start predicting
-        (measured by the burn in)&#34;&#34;&#34;
-        return (
-            len(self.experience_queue) &gt;= self.minimum_experiences_to_start_predicting
-        )</code></pre>
+    def ready_to_predict(self) -&gt; bool:
+        &#34;&#34;&#34;Return true only if we had enough experiences to start predicting
+        (measured by the burn in)
+        &#34;&#34;&#34;
+        return len(self.experience_queue) &gt;= self.minimum_experiences_to_start_predicting</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -280,58 +279,53 @@ inheritance.</p></div>
 <h3>Methods</h3>
 <dl>
 <dt id="deeprecsys.rl.experience_replay.experience_buffer.ExperienceReplayBuffer.ready_to_predict"><code class="name flex">
-<span>def <span class="ident">ready_to_predict</span></span>(<span>self)</span>
+<span>def <span class="ident">ready_to_predict</span></span>(<span>self) ‑> bool</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Returns true only if we had enough experiences to start predicting
+<div class="desc"><p>Return true only if we had enough experiences to start predicting
 (measured by the burn in)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def ready_to_predict(self):
-    &#34;&#34;&#34;Returns true only if we had enough experiences to start predicting
-    (measured by the burn in)&#34;&#34;&#34;
-    return (
-        len(self.experience_queue) &gt;= self.minimum_experiences_to_start_predicting
-    )</code></pre>
+<pre><code class="python">def ready_to_predict(self) -&gt; bool:
+    &#34;&#34;&#34;Return true only if we had enough experiences to start predicting
+    (measured by the burn in)
+    &#34;&#34;&#34;
+    return len(self.experience_queue) &gt;= self.minimum_experiences_to_start_predicting</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.experience_replay.experience_buffer.ExperienceReplayBuffer.sample_batch"><code class="name flex">
 <span>def <span class="ident">sample_batch</span></span>(<span>self) ‑> List[Tuple]</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Samples a given number of experiences from the queue</p></div>
+<div class="desc"><p>Sample a given number of experiences from the queue</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def sample_batch(self) -&gt; List[Tuple]:
-    &#34;&#34;&#34; Samples a given number of experiences from the queue &#34;&#34;&#34;
+    &#34;&#34;&#34;Sample a given number of experiences from the queue&#34;&#34;&#34;
     # samples the index of `batch_size` different experiences from the replay memory
-    samples = self.random_state.choice(
-        len(self.experience_queue), self.batch_size, replace=False
-    )
+    samples = self.random_state.choice(len(self.experience_queue), self.batch_size, replace=False)
     # get the experiences
     experiences = [self.experience_queue[i] for i in samples]
     # returns a flattened list of the samples
-    return zip(*experiences)</code></pre>
+    return zip(*experiences, strict=False)  # type: ignore</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.experience_replay.experience_buffer.ExperienceReplayBuffer.store_experience"><code class="name flex">
-<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, next_state: Any)</span>
+<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, next_state: Any) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Stores a new experience in the queue</p></div>
+<div class="desc"><p>Store a new experience in the queue</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def store_experience(
-    self, state: Any, action: Any, reward: float, done: bool, next_state: Any
-):
-    &#34;&#34;&#34; Stores a new experience in the queue &#34;&#34;&#34;
-    experience = Experience(state, action, reward, done, next_state)
+<pre><code class="python">def store_experience(self, state: Any, action: Any, reward: float, done: bool, next_state: Any) -&gt; None:
+    &#34;&#34;&#34;Store a new experience in the queue&#34;&#34;&#34;
+    experience = Experience(state, action, reward, done, next_state)  # type: ignore
     # append to the right (end) of the queue
     self.experience_queue.append(experience)</code></pre>
 </details>
@@ -386,7 +380,7 @@ inheritance.</p></div>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>

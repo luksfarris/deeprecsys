@@ -35,11 +35,10 @@ class DuelingDDQN(BaseNetwork):
         self.optimizer = Adam(self.parameters(), lr=learning_rate)
         self.statistics = statistics
 
-    def _build_network(
-        self, n_input: int, n_output: int, noise_sigma: float, hidden_layers: List[int]
-    ) -> None:
+    def _build_network(self, n_input: int, n_output: int, noise_sigma: float, hidden_layers: List[int]) -> None:
         """Build the dueling network with noisy layers, the value
-        subnet and the advantage subnet. TODO: add `.to_device()` to Modules"""
+        subnet and the advantage subnet. TODO: add `.to_device()` to Modules
+        """
         if len(hidden_layers) != 4:
             raise ValueError("Unexpected amount of layers")
         fc_1, fc_2, value_size, advantage_size = hidden_layers
@@ -65,9 +64,7 @@ class DuelingDDQN(BaseNetwork):
         # This is the Dueling DQN part
         # Combines V and A to get Q: Q(s,a) = V(s) + (A(s,a) - 1/|A| * sum A(s,a'))
         if len(state.shape) == 2:
-            q_values = value_of_state + (
-                advantage_of_state - advantage_of_state.mean(dim=1, keepdim=True)
-            )
+            q_values = value_of_state + (advantage_of_state - advantage_of_state.mean(dim=1, keepdim=True))
         else:
             q_values = value_of_state + (advantage_of_state - advantage_of_state.mean())
         return q_values
@@ -85,69 +82,51 @@ class DuelingDDQN(BaseNetwork):
         _, top_indices = q_values.topk(k=k)
         return [int(v) for v in top_indices.detach().numpy()]  # TODO: cpu() ?
 
-    def learn_with(
-        self, buffer: PrioritizedExperienceReplayBuffer, target_network: Module
-    ) -> None:
+    def learn_with(self, buffer: PrioritizedExperienceReplayBuffer, target_network: Module) -> None:
         """Train the target network using the replay buffer."""
         experiences = buffer.sample_batch()
         self.optimizer.zero_grad()
-        td_error, weights = self._calculate_td_error_and_weigths(
-            experiences, target_network
-        )
+        td_error, weights = self._calculate_td_error_and_weigths(experiences, target_network)
         loss = (td_error.pow(2) * weights).mean().to(self.device)
         loss.backward()
         self.optimizer.step()
         # store loss in statistics
         if self.statistics:
             if self.device == "cuda":
-                self.statistics.append_metric(
-                    "loss", float(loss.detach().cpu().numpy())
-                )
+                self.statistics.append_metric("loss", float(loss.detach().cpu().numpy()))
             else:
                 self.statistics.append_metric("loss", float(loss.detach().numpy()))
         # update buffer priorities
-        errors_from_batch = td_error.detach().cpu().numpy()
+        errors_from_batch = td_error.detach().cpu().numpy().flatten()
         buffer.update_priorities(experiences, errors_from_batch)
 
     def _calculate_td_error_and_weigths(
         self, experiences: List[Tuple], target_network: Module
     ) -> Tuple[Tensor, Tensor]:
-        states, actions, rewards, dones, next_states, weights, samples = [
-            i for i in experiences
-        ]
+        states, actions, rewards, dones, next_states, weights, samples = [i for i in experiences]
         # convert to tensors
         state_tensors = FloatTensor(states).to(device=self.device)
         next_state_tensors = FloatTensor(next_states).to(device=self.device)
         reward_tensors = FloatTensor(rewards).to(device=self.device).reshape(-1, 1)
-        action_tensors = (
-            LongTensor(array(actions)).reshape(-1, 1).to(device=self.device)
-        )
+        action_tensors = LongTensor(array(actions)).reshape(-1, 1).to(device=self.device)
         done_tensors = BoolTensor(dones).to(device=self.device)
         weight_tensors = FloatTensor(weights).to(device=self.device)
         # the following logic is the DDQN update
         # Then we get the predicted actions for the states that came next
         # (using the main network)
-        actions_for_next_states = [
-            self.top_k_actions_for_state(s)[0] for s in next_state_tensors
-        ]
-        actions_for_next_states_tensor = (
-            LongTensor(actions_for_next_states).reshape(-1, 1).to(device=self.device)
-        )
+        actions_for_next_states = [self.top_k_actions_for_state(s)[0] for s in next_state_tensors]
+        actions_for_next_states_tensor = LongTensor(actions_for_next_states).reshape(-1, 1).to(device=self.device)
         # Then we use them to get the estimated Q Values for these next states/actions,
         # according to the target network. Remember that the target network is a copy
         # of this one taken some steps ago
         next_q_values = target_network.forward(next_state_tensors)
         # now we get the q values for the actions that were predicted for the next state
         # we call detach() so no gradient will be backpropagated along this variable
-        next_q_values_for_actions = gather(
-            next_q_values, 1, actions_for_next_states_tensor
-        ).detach()
+        next_q_values_for_actions = gather(next_q_values, 1, actions_for_next_states_tensor).detach()
         # zero value for done timesteps
         next_q_values_for_actions[done_tensors] = 0
         # bellman equation
-        expected_q_values = (
-            self.discount_factor * next_q_values_for_actions + reward_tensors
-        )
+        expected_q_values = self.discount_factor * next_q_values_for_actions + reward_tensors
         # Then get the Q-Values of the main network for the selected actions
         q_values = gather(self.forward(state_tensors), 1, action_tensors)
         # And compare them (this is the time-difference or TD error)

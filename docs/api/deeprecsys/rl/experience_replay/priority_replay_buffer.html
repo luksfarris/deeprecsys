@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>deeprecsys.rl.experience_replay.priority_replay_buffer API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -28,28 +28,39 @@
 </summary>
 <pre><code class="python">from collections import namedtuple
 from typing import Any, List, Tuple
+
 import numpy
+import numpy as np
+
+from deeprecsys.rl.experience_replay.buffer_parameters import (
+    ExperienceReplayBufferParameters,
+    PERBufferParameters,
+)
 from deeprecsys.rl.experience_replay.experience_buffer import (
     Experience,
     ExperienceReplayBuffer,
 )
-from deeprecsys.rl.experience_replay.buffer_parameters import (
-    PERBufferParameters,
-    ExperienceReplayBufferParameters,
-)
-import numpy as np
 
-PriorityExperience = namedtuple(
+PriorityExperience = namedtuple(  # type: ignore
     &#34;PriorityExperience&#34;, field_names=[&#34;experience&#34;, &#34;priority&#34;]
 )
 
 
 class PrioritizedExperienceReplayBuffer(ExperienceReplayBuffer):
+    &#34;&#34;&#34;Experience Replay Buffer that gives priority to experiences that the network learns more from. We can tell this
+    using the loss. We use importance sampling to avoid bias towards those experiences.
+    &#34;&#34;&#34;
+
     def __init__(
         self,
-        buffer_parameters=ExperienceReplayBufferParameters(),
-        per_parameters=PERBufferParameters(),
+        buffer_parameters: ExperienceReplayBufferParameters = None,
+        per_parameters: PERBufferParameters = None,
     ):
+        &#34;&#34;&#34;Start the buffer with the provided parameters.&#34;&#34;&#34;
+        if not buffer_parameters:
+            buffer_parameters = ExperienceReplayBufferParameters()
+        if not per_parameters:
+            per_parameters = PERBufferParameters()
         super().__init__(buffer_parameters)
         # beta controls the effect of the weights (how much to learn from each
         # experience in the batch)
@@ -62,59 +73,57 @@ class PrioritizedExperienceReplayBuffer(ExperienceReplayBuffer):
         self.epsilon = per_parameters.epsilon
 
     def priorities(self) -&gt; numpy.array:
-        &#34;&#34;&#34; Gets the priority for each experience in the queue &#34;&#34;&#34;
-        return numpy.array(
-            [e.priority for e in self.experience_queue], dtype=numpy.float32
-        )
+        &#34;&#34;&#34;Get the priority of each experience in the queue&#34;&#34;&#34;
+        return numpy.array([e.priority for e in self.experience_queue], dtype=numpy.float32)
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, next_state: Any
-    ):
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, next_state: Any) -&gt; None:
         &#34;&#34;&#34;We include a priority to the experience. if the queue is empty, priority is 1 (max),
-        otherwise we check the maximum priority in the queue&#34;&#34;&#34;
+        otherwise we check the maximum priority in the queue
+        &#34;&#34;&#34;
         priorities = self.priorities()
         priority = priorities.max() if len(priorities) &gt; 0 else 1.0
         if not np.isnan(priority):
             experience = Experience(state, action, reward, done, next_state)
-            priority_experience = PriorityExperience(experience, priority)
+            priority_experience = PriorityExperience(experience, priority)  # type: ignore
             # append to the right (end) of the queue
             self.experience_queue.append(priority_experience)
 
-    def update_beta(self):
+    def update_beta(self) -&gt; None:
         &#34;&#34;&#34;We want to grow the beta value slowly and linearly, starting at a value
-        close to zero, and stopping at 1.0. This is for the Importance Sampling&#34;&#34;&#34;
+        close to zero, and stopping at 1.0. This is for the Importance Sampling
+        &#34;&#34;&#34;
         if self.beta &lt; 1.0:
             self.beta += self.beta_growth
 
-    def update_priorities(self, batch: List[Tuple], errors_from_batch: List[float]):
+    def update_priorities(self, batch: List[Tuple], errors_from_batch: List[float]) -&gt; None:
         &#34;&#34;&#34;We want the priority of elements to be the TD error of plus an epsilon
         constant. The epsilon constant makes sure that no experience ever gets a
         priority zero. This prioritization strategy gives more importance to
-        elements that bring more learning to the network.&#34;&#34;&#34;
-        experience_indexes = [b[-1] for b in numpy.array(batch, dtype=numpy.object).T]
+        elements that bring more learning to the network.
+        &#34;&#34;&#34;
+        experience_indexes = [b[-1] for b in numpy.array(batch, dtype=&#34;object&#34;).T]
         for i in range(len(experience_indexes)):
             error = abs(errors_from_batch[i]) + self.epsilon
             if not np.isnan(error):
-                self.experience_queue[experience_indexes[i]] = self.experience_queue[
-                    experience_indexes[i]
-                ]._replace(priority=error)
+                experience = self.experience_queue[experience_indexes[i]]
+                experience._replace(priority=error)
+                self.experience_queue[experience_indexes[i]] = experience
 
     def sample_batch(self) -&gt; List[Tuple]:
         &#34;&#34;&#34;We sample experiences using their priorities as weights for sampling. The
         effect of the priorities is controlled by the alpha parameter. This is
-        already an advantage but it can introduce bias in a network by always
+        already an advantage, but it can introduce bias in a network by always
         choosing the same type of experiences for training. In order to fight this, we
         compute the weight of the experience (this is called Importance Sampling,
         or IP). We want the weights to decrease over time, this is controlled by
-        the beta parameter.&#34;&#34;&#34;
+        the beta parameter.
+        &#34;&#34;&#34;
         # calculate probabilities (alpha)
         probabilities = self.priorities() ** self.alpha
         p = probabilities / probabilities.sum()
         # sample experiences
         buffer_size = len(self.experience_queue)
-        samples = numpy.random.choice(
-            a=buffer_size, size=self.batch_size, p=p, replace=False
-        )
+        samples = numpy.random.choice(a=buffer_size, size=self.batch_size, p=p, replace=False)
         experiences = [self.experience_queue[i].experience for i in samples]
         # importance Sampling
         # w_i = (1/N * 1/P_i) ^ beta
@@ -122,7 +131,7 @@ class PrioritizedExperienceReplayBuffer(ExperienceReplayBuffer):
         weights = weights / weights.max()
         self.update_beta()
         # return experiences with weights
-        return list(zip(*experiences)) + [tuple(weights)] + [tuple(samples)]</code></pre>
+        return list(zip(*experiences, strict=False)) + [tuple(weights)] + [tuple(samples)]</code></pre>
 </details>
 </section>
 <section>
@@ -136,21 +145,31 @@ class PrioritizedExperienceReplayBuffer(ExperienceReplayBuffer):
 <dl>
 <dt id="deeprecsys.rl.experience_replay.priority_replay_buffer.PrioritizedExperienceReplayBuffer"><code class="flex name class">
 <span>class <span class="ident">PrioritizedExperienceReplayBuffer</span></span>
-<span>(</span><span>buffer_parameters=&lt;deeprecsys.rl.experience_replay.buffer_parameters.ExperienceReplayBufferParameters object&gt;, per_parameters=&lt;deeprecsys.rl.experience_replay.buffer_parameters.PERBufferParameters object&gt;)</span>
+<span>(</span><span>buffer_parameters: <a title="deeprecsys.rl.experience_replay.buffer_parameters.ExperienceReplayBufferParameters" href="buffer_parameters.html#deeprecsys.rl.experience_replay.buffer_parameters.ExperienceReplayBufferParameters">ExperienceReplayBufferParameters</a> = None, per_parameters: <a title="deeprecsys.rl.experience_replay.buffer_parameters.PERBufferParameters" href="buffer_parameters.html#deeprecsys.rl.experience_replay.buffer_parameters.PERBufferParameters">PERBufferParameters</a> = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Helper class that provides a standard way to create an ABC using
-inheritance.</p></div>
+<div class="desc"><p>Experience Replay Buffer that gives priority to experiences that the network learns more from. We can tell this
+using the loss. We use importance sampling to avoid bias towards those experiences.</p>
+<p>Start the buffer with the provided parameters.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class PrioritizedExperienceReplayBuffer(ExperienceReplayBuffer):
+    &#34;&#34;&#34;Experience Replay Buffer that gives priority to experiences that the network learns more from. We can tell this
+    using the loss. We use importance sampling to avoid bias towards those experiences.
+    &#34;&#34;&#34;
+
     def __init__(
         self,
-        buffer_parameters=ExperienceReplayBufferParameters(),
-        per_parameters=PERBufferParameters(),
+        buffer_parameters: ExperienceReplayBufferParameters = None,
+        per_parameters: PERBufferParameters = None,
     ):
+        &#34;&#34;&#34;Start the buffer with the provided parameters.&#34;&#34;&#34;
+        if not buffer_parameters:
+            buffer_parameters = ExperienceReplayBufferParameters()
+        if not per_parameters:
+            per_parameters = PERBufferParameters()
         super().__init__(buffer_parameters)
         # beta controls the effect of the weights (how much to learn from each
         # experience in the batch)
@@ -163,59 +182,57 @@ inheritance.</p></div>
         self.epsilon = per_parameters.epsilon
 
     def priorities(self) -&gt; numpy.array:
-        &#34;&#34;&#34; Gets the priority for each experience in the queue &#34;&#34;&#34;
-        return numpy.array(
-            [e.priority for e in self.experience_queue], dtype=numpy.float32
-        )
+        &#34;&#34;&#34;Get the priority of each experience in the queue&#34;&#34;&#34;
+        return numpy.array([e.priority for e in self.experience_queue], dtype=numpy.float32)
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, next_state: Any
-    ):
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, next_state: Any) -&gt; None:
         &#34;&#34;&#34;We include a priority to the experience. if the queue is empty, priority is 1 (max),
-        otherwise we check the maximum priority in the queue&#34;&#34;&#34;
+        otherwise we check the maximum priority in the queue
+        &#34;&#34;&#34;
         priorities = self.priorities()
         priority = priorities.max() if len(priorities) &gt; 0 else 1.0
         if not np.isnan(priority):
             experience = Experience(state, action, reward, done, next_state)
-            priority_experience = PriorityExperience(experience, priority)
+            priority_experience = PriorityExperience(experience, priority)  # type: ignore
             # append to the right (end) of the queue
             self.experience_queue.append(priority_experience)
 
-    def update_beta(self):
+    def update_beta(self) -&gt; None:
         &#34;&#34;&#34;We want to grow the beta value slowly and linearly, starting at a value
-        close to zero, and stopping at 1.0. This is for the Importance Sampling&#34;&#34;&#34;
+        close to zero, and stopping at 1.0. This is for the Importance Sampling
+        &#34;&#34;&#34;
         if self.beta &lt; 1.0:
             self.beta += self.beta_growth
 
-    def update_priorities(self, batch: List[Tuple], errors_from_batch: List[float]):
+    def update_priorities(self, batch: List[Tuple], errors_from_batch: List[float]) -&gt; None:
         &#34;&#34;&#34;We want the priority of elements to be the TD error of plus an epsilon
         constant. The epsilon constant makes sure that no experience ever gets a
         priority zero. This prioritization strategy gives more importance to
-        elements that bring more learning to the network.&#34;&#34;&#34;
-        experience_indexes = [b[-1] for b in numpy.array(batch, dtype=numpy.object).T]
+        elements that bring more learning to the network.
+        &#34;&#34;&#34;
+        experience_indexes = [b[-1] for b in numpy.array(batch, dtype=&#34;object&#34;).T]
         for i in range(len(experience_indexes)):
             error = abs(errors_from_batch[i]) + self.epsilon
             if not np.isnan(error):
-                self.experience_queue[experience_indexes[i]] = self.experience_queue[
-                    experience_indexes[i]
-                ]._replace(priority=error)
+                experience = self.experience_queue[experience_indexes[i]]
+                experience._replace(priority=error)
+                self.experience_queue[experience_indexes[i]] = experience
 
     def sample_batch(self) -&gt; List[Tuple]:
         &#34;&#34;&#34;We sample experiences using their priorities as weights for sampling. The
         effect of the priorities is controlled by the alpha parameter. This is
-        already an advantage but it can introduce bias in a network by always
+        already an advantage, but it can introduce bias in a network by always
         choosing the same type of experiences for training. In order to fight this, we
         compute the weight of the experience (this is called Importance Sampling,
         or IP). We want the weights to decrease over time, this is controlled by
-        the beta parameter.&#34;&#34;&#34;
+        the beta parameter.
+        &#34;&#34;&#34;
         # calculate probabilities (alpha)
         probabilities = self.priorities() ** self.alpha
         p = probabilities / probabilities.sum()
         # sample experiences
         buffer_size = len(self.experience_queue)
-        samples = numpy.random.choice(
-            a=buffer_size, size=self.batch_size, p=p, replace=False
-        )
+        samples = numpy.random.choice(a=buffer_size, size=self.batch_size, p=p, replace=False)
         experiences = [self.experience_queue[i].experience for i in samples]
         # importance Sampling
         # w_i = (1/N * 1/P_i) ^ beta
@@ -223,7 +240,7 @@ inheritance.</p></div>
         weights = weights / weights.max()
         self.update_beta()
         # return experiences with weights
-        return list(zip(*experiences)) + [tuple(weights)] + [tuple(samples)]</code></pre>
+        return list(zip(*experiences, strict=False)) + [tuple(weights)] + [tuple(samples)]</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -237,16 +254,14 @@ inheritance.</p></div>
 <span>def <span class="ident">priorities</span></span>(<span>self) ‑> <built-in function array></span>
 </code></dt>
 <dd>
-<div class="desc"><p>Gets the priority for each experience in the queue</p></div>
+<div class="desc"><p>Get the priority of each experience in the queue</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def priorities(self) -&gt; numpy.array:
-    &#34;&#34;&#34; Gets the priority for each experience in the queue &#34;&#34;&#34;
-    return numpy.array(
-        [e.priority for e in self.experience_queue], dtype=numpy.float32
-    )</code></pre>
+    &#34;&#34;&#34;Get the priority of each experience in the queue&#34;&#34;&#34;
+    return numpy.array([e.priority for e in self.experience_queue], dtype=numpy.float32)</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.experience_replay.priority_replay_buffer.PrioritizedExperienceReplayBuffer.sample_batch"><code class="name flex">
@@ -255,7 +270,7 @@ inheritance.</p></div>
 <dd>
 <div class="desc"><p>We sample experiences using their priorities as weights for sampling. The
 effect of the priorities is controlled by the alpha parameter. This is
-already an advantage but it can introduce bias in a network by always
+already an advantage, but it can introduce bias in a network by always
 choosing the same type of experiences for training. In order to fight this, we
 compute the weight of the experience (this is called Importance Sampling,
 or IP). We want the weights to decrease over time, this is controlled by
@@ -267,19 +282,18 @@ the beta parameter.</p></div>
 <pre><code class="python">def sample_batch(self) -&gt; List[Tuple]:
     &#34;&#34;&#34;We sample experiences using their priorities as weights for sampling. The
     effect of the priorities is controlled by the alpha parameter. This is
-    already an advantage but it can introduce bias in a network by always
+    already an advantage, but it can introduce bias in a network by always
     choosing the same type of experiences for training. In order to fight this, we
     compute the weight of the experience (this is called Importance Sampling,
     or IP). We want the weights to decrease over time, this is controlled by
-    the beta parameter.&#34;&#34;&#34;
+    the beta parameter.
+    &#34;&#34;&#34;
     # calculate probabilities (alpha)
     probabilities = self.priorities() ** self.alpha
     p = probabilities / probabilities.sum()
     # sample experiences
     buffer_size = len(self.experience_queue)
-    samples = numpy.random.choice(
-        a=buffer_size, size=self.batch_size, p=p, replace=False
-    )
+    samples = numpy.random.choice(a=buffer_size, size=self.batch_size, p=p, replace=False)
     experiences = [self.experience_queue[i].experience for i in samples]
     # importance Sampling
     # w_i = (1/N * 1/P_i) ^ beta
@@ -287,11 +301,11 @@ the beta parameter.</p></div>
     weights = weights / weights.max()
     self.update_beta()
     # return experiences with weights
-    return list(zip(*experiences)) + [tuple(weights)] + [tuple(samples)]</code></pre>
+    return list(zip(*experiences, strict=False)) + [tuple(weights)] + [tuple(samples)]</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.experience_replay.priority_replay_buffer.PrioritizedExperienceReplayBuffer.store_experience"><code class="name flex">
-<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, next_state: Any)</span>
+<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, next_state: Any) ‑> None</span>
 </code></dt>
 <dd>
 <div class="desc"><p>We include a priority to the experience. if the queue is empty, priority is 1 (max),
@@ -300,22 +314,21 @@ otherwise we check the maximum priority in the queue</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def store_experience(
-    self, state: Any, action: Any, reward: float, done: bool, next_state: Any
-):
+<pre><code class="python">def store_experience(self, state: Any, action: Any, reward: float, done: bool, next_state: Any) -&gt; None:
     &#34;&#34;&#34;We include a priority to the experience. if the queue is empty, priority is 1 (max),
-    otherwise we check the maximum priority in the queue&#34;&#34;&#34;
+    otherwise we check the maximum priority in the queue
+    &#34;&#34;&#34;
     priorities = self.priorities()
     priority = priorities.max() if len(priorities) &gt; 0 else 1.0
     if not np.isnan(priority):
         experience = Experience(state, action, reward, done, next_state)
-        priority_experience = PriorityExperience(experience, priority)
+        priority_experience = PriorityExperience(experience, priority)  # type: ignore
         # append to the right (end) of the queue
         self.experience_queue.append(priority_experience)</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.experience_replay.priority_replay_buffer.PrioritizedExperienceReplayBuffer.update_beta"><code class="name flex">
-<span>def <span class="ident">update_beta</span></span>(<span>self)</span>
+<span>def <span class="ident">update_beta</span></span>(<span>self) ‑> None</span>
 </code></dt>
 <dd>
 <div class="desc"><p>We want to grow the beta value slowly and linearly, starting at a value
@@ -324,15 +337,16 @@ close to zero, and stopping at 1.0. This is for the Importance Sampling</p></div
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def update_beta(self):
+<pre><code class="python">def update_beta(self) -&gt; None:
     &#34;&#34;&#34;We want to grow the beta value slowly and linearly, starting at a value
-    close to zero, and stopping at 1.0. This is for the Importance Sampling&#34;&#34;&#34;
+    close to zero, and stopping at 1.0. This is for the Importance Sampling
+    &#34;&#34;&#34;
     if self.beta &lt; 1.0:
         self.beta += self.beta_growth</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.experience_replay.priority_replay_buffer.PrioritizedExperienceReplayBuffer.update_priorities"><code class="name flex">
-<span>def <span class="ident">update_priorities</span></span>(<span>self, batch: List[Tuple], errors_from_batch: List[float])</span>
+<span>def <span class="ident">update_priorities</span></span>(<span>self, batch: List[Tuple], errors_from_batch: List[float]) ‑> None</span>
 </code></dt>
 <dd>
 <div class="desc"><p>We want the priority of elements to be the TD error of plus an epsilon
@@ -343,18 +357,19 @@ elements that bring more learning to the network.</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def update_priorities(self, batch: List[Tuple], errors_from_batch: List[float]):
+<pre><code class="python">def update_priorities(self, batch: List[Tuple], errors_from_batch: List[float]) -&gt; None:
     &#34;&#34;&#34;We want the priority of elements to be the TD error of plus an epsilon
     constant. The epsilon constant makes sure that no experience ever gets a
     priority zero. This prioritization strategy gives more importance to
-    elements that bring more learning to the network.&#34;&#34;&#34;
-    experience_indexes = [b[-1] for b in numpy.array(batch, dtype=numpy.object).T]
+    elements that bring more learning to the network.
+    &#34;&#34;&#34;
+    experience_indexes = [b[-1] for b in numpy.array(batch, dtype=&#34;object&#34;).T]
     for i in range(len(experience_indexes)):
         error = abs(errors_from_batch[i]) + self.epsilon
         if not np.isnan(error):
-            self.experience_queue[experience_indexes[i]] = self.experience_queue[
-                experience_indexes[i]
-            ]._replace(priority=error)</code></pre>
+            experience = self.experience_queue[experience_indexes[i]]
+            experience._replace(priority=error)
+            self.experience_queue[experience_indexes[i]] = experience</code></pre>
 </details>
 </dd>
 </dl>
@@ -428,7 +443,7 @@ elements that bring more learning to the network.</p></div>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>

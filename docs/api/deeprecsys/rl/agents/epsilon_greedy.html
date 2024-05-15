@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>deeprecsys.rl.agents.epsilon_greedy API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -26,20 +26,27 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from .agent import ReinforcementLearning
-from abc import ABC, abstractmethod
-from numpy.random import RandomState
+<pre><code class="python">from abc import ABC, abstractmethod
 from typing import Any
+
+from numpy.random import RandomState
+
+from deeprecsys.rl.agents.agent import ReinforcementLearning
 
 
 class DecayingEpsilonGreedy(ReinforcementLearning, ABC):
+    &#34;&#34;&#34;A reinforcement learning model that reduces exploration over time.&#34;&#34;&#34;
+
     def __init__(
         self,
         initial_exploration_probability: float = 0.2,
         decay_rate: float = 1,
-        minimum_exploration_probability=0.01,
-        random_state: RandomState = RandomState(),
+        minimum_exploration_probability: float = 0.01,
+        random_state: RandomState = None,
     ):
+        &#34;&#34;&#34;To set up a classic e-greedy model, the decay rate needs to be 1.&#34;&#34;&#34;
+        if random_state is None:
+            random_state = RandomState()
         self.random_state = random_state
         self.epsilon = initial_exploration_probability
         self.minimum_exploration_probability = minimum_exploration_probability
@@ -47,27 +54,26 @@ class DecayingEpsilonGreedy(ReinforcementLearning, ABC):
 
     def action_for_state(self, state: Any) -&gt; Any:
         &#34;&#34;&#34;With probability epsilon, we explore by sampling one of the random available actions.
-        Otherwise we exploit by chosing the action with the highest Q value.&#34;&#34;&#34;
+        Otherwise we exploit by chosing the action with the highest Q value.
+        &#34;&#34;&#34;
         if self.random_state.random() &lt; self.epsilon:
             action = self.explore()
         else:
             action = self.exploit(state)
         return action
 
-    def _decay(self):
-        &#34;&#34;&#34; Slowly decrease the exploration probability. &#34;&#34;&#34;
-        self.epsilon = max(
-            self.epsilon * self.decay_rate, self.minimum_exploration_probability
-        )
+    def _decay(self) -&gt; None:
+        &#34;&#34;&#34;Slowly decrease the exploration probability.&#34;&#34;&#34;
+        self.epsilon = max(self.epsilon * self.decay_rate, self.minimum_exploration_probability)
 
     @abstractmethod
     def explore(self) -&gt; Any:
-        &#34;&#34;&#34; Randomly selects an action&#34;&#34;&#34;
+        &#34;&#34;&#34;Randomly selects an action&#34;&#34;&#34;
         pass
 
     @abstractmethod
     def exploit(self, state: Any) -&gt; Any:
-        &#34;&#34;&#34; Selects the best action known for the given state &#34;&#34;&#34;
+        &#34;&#34;&#34;Select the best action known for the given state&#34;&#34;&#34;
         pass</code></pre>
 </details>
 </section>
@@ -82,23 +88,28 @@ class DecayingEpsilonGreedy(ReinforcementLearning, ABC):
 <dl>
 <dt id="deeprecsys.rl.agents.epsilon_greedy.DecayingEpsilonGreedy"><code class="flex name class">
 <span>class <span class="ident">DecayingEpsilonGreedy</span></span>
-<span>(</span><span>initial_exploration_probability: float = 0.2, decay_rate: float = 1, minimum_exploration_probability=0.01, random_state: numpy.random.mtrand.RandomState = RandomState(MT19937))</span>
+<span>(</span><span>initial_exploration_probability: float = 0.2, decay_rate: float = 1, minimum_exploration_probability: float = 0.01, random_state: numpy.random.mtrand.RandomState = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Helper class that provides a standard way to create an ABC using
-inheritance.</p></div>
+<div class="desc"><p>A reinforcement learning model that reduces exploration over time.</p>
+<p>To set up a classic e-greedy model, the decay rate needs to be 1.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DecayingEpsilonGreedy(ReinforcementLearning, ABC):
+    &#34;&#34;&#34;A reinforcement learning model that reduces exploration over time.&#34;&#34;&#34;
+
     def __init__(
         self,
         initial_exploration_probability: float = 0.2,
         decay_rate: float = 1,
-        minimum_exploration_probability=0.01,
-        random_state: RandomState = RandomState(),
+        minimum_exploration_probability: float = 0.01,
+        random_state: RandomState = None,
     ):
+        &#34;&#34;&#34;To set up a classic e-greedy model, the decay rate needs to be 1.&#34;&#34;&#34;
+        if random_state is None:
+            random_state = RandomState()
         self.random_state = random_state
         self.epsilon = initial_exploration_probability
         self.minimum_exploration_probability = minimum_exploration_probability
@@ -106,27 +117,26 @@ inheritance.</p></div>
 
     def action_for_state(self, state: Any) -&gt; Any:
         &#34;&#34;&#34;With probability epsilon, we explore by sampling one of the random available actions.
-        Otherwise we exploit by chosing the action with the highest Q value.&#34;&#34;&#34;
+        Otherwise we exploit by chosing the action with the highest Q value.
+        &#34;&#34;&#34;
         if self.random_state.random() &lt; self.epsilon:
             action = self.explore()
         else:
             action = self.exploit(state)
         return action
 
-    def _decay(self):
-        &#34;&#34;&#34; Slowly decrease the exploration probability. &#34;&#34;&#34;
-        self.epsilon = max(
-            self.epsilon * self.decay_rate, self.minimum_exploration_probability
-        )
+    def _decay(self) -&gt; None:
+        &#34;&#34;&#34;Slowly decrease the exploration probability.&#34;&#34;&#34;
+        self.epsilon = max(self.epsilon * self.decay_rate, self.minimum_exploration_probability)
 
     @abstractmethod
     def explore(self) -&gt; Any:
-        &#34;&#34;&#34; Randomly selects an action&#34;&#34;&#34;
+        &#34;&#34;&#34;Randomly selects an action&#34;&#34;&#34;
         pass
 
     @abstractmethod
     def exploit(self, state: Any) -&gt; Any:
-        &#34;&#34;&#34; Selects the best action known for the given state &#34;&#34;&#34;
+        &#34;&#34;&#34;Select the best action known for the given state&#34;&#34;&#34;
         pass</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -152,7 +162,8 @@ Otherwise we exploit by chosing the action with the highest Q value.</p></div>
 </summary>
 <pre><code class="python">def action_for_state(self, state: Any) -&gt; Any:
     &#34;&#34;&#34;With probability epsilon, we explore by sampling one of the random available actions.
-    Otherwise we exploit by chosing the action with the highest Q value.&#34;&#34;&#34;
+    Otherwise we exploit by chosing the action with the highest Q value.
+    &#34;&#34;&#34;
     if self.random_state.random() &lt; self.epsilon:
         action = self.explore()
     else:
@@ -164,14 +175,14 @@ Otherwise we exploit by chosing the action with the highest Q value.</p></div>
 <span>def <span class="ident">exploit</span></span>(<span>self, state: Any) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Selects the best action known for the given state</p></div>
+<div class="desc"><p>Select the best action known for the given state</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@abstractmethod
 def exploit(self, state: Any) -&gt; Any:
-    &#34;&#34;&#34; Selects the best action known for the given state &#34;&#34;&#34;
+    &#34;&#34;&#34;Select the best action known for the given state&#34;&#34;&#34;
     pass</code></pre>
 </details>
 </dd>
@@ -186,11 +197,20 @@ def exploit(self, state: Any) -&gt; Any:
 </summary>
 <pre><code class="python">@abstractmethod
 def explore(self) -&gt; Any:
-    &#34;&#34;&#34; Randomly selects an action&#34;&#34;&#34;
+    &#34;&#34;&#34;Randomly selects an action&#34;&#34;&#34;
     pass</code></pre>
 </details>
 </dd>
 </dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="deeprecsys.rl.agents.agent.ReinforcementLearning" href="agent.html#deeprecsys.rl.agents.agent.ReinforcementLearning">ReinforcementLearning</a></b></code>:
+<ul class="hlist">
+<li><code><a title="deeprecsys.rl.agents.agent.ReinforcementLearning.store_experience" href="agent.html#deeprecsys.rl.agents.agent.ReinforcementLearning.store_experience">store_experience</a></code></li>
+<li><code><a title="deeprecsys.rl.agents.agent.ReinforcementLearning.top_k_actions_for_state" href="agent.html#deeprecsys.rl.agents.agent.ReinforcementLearning.top_k_actions_for_state">top_k_actions_for_state</a></code></li>
+</ul>
+</li>
+</ul>
 </dd>
 </dl>
 </section>
@@ -222,7 +242,7 @@ def explore(self) -&gt; Any:
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>

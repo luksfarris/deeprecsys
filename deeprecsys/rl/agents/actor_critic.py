@@ -13,7 +13,8 @@ class ActorCriticAgent(ReinforcementLearning):
     """Policy estimator using a value estimator as a baseline.
     It's on-policy, for discrete action spaces, and episodic environments.
     This implementation uses stochastic policies.
-    TODO: could be a sub class of reinforce"""
+    TODO: could be a sub class of reinforce
+    """
 
     buffer: ExperienceReplayBuffer
 
@@ -51,9 +52,7 @@ class ActorCriticAgent(ReinforcementLearning):
 
     def reset_buffer(self) -> None:
         """Clear all the experiences from the buffer"""
-        self.buffer = ExperienceReplayBuffer(
-            ExperienceReplayBufferParameters(10000, 1, 1)
-        )
+        self.buffer = ExperienceReplayBuffer(ExperienceReplayBufferParameters(10000, 1, 1))
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -> List[int]:
         """Return the next best K action"""
@@ -63,9 +62,7 @@ class ActorCriticAgent(ReinforcementLearning):
         """Return the next best action"""
         return self.top_k_actions_for_state(state)[0]
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ) -> None:
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -> None:
         """Store the experience in the experience buffer"""
         state_flat = state.flatten()
         new_state_flat = new_state.flatten()
@@ -81,7 +78,7 @@ class ActorCriticAgent(ReinforcementLearning):
         for timestep, experience in enumerate(experiences):
             total_return = 0
             for i, t in enumerate(experiences[timestep:]):
-                total_return += (self.discount_factor ** i) * t.reward
+                total_return += (self.discount_factor**i) * t.reward
 
             # Calculate baseline/advantage
             baseline_value = self.value_estimator.predict(experience.state).detach()

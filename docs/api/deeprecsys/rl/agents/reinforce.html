@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>deeprecsys.rl.agents.reinforce API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -26,29 +26,37 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import numpy as np
+<pre><code class="python">from typing import Any, List, Optional
+
+import numpy as np
+from torch import FloatTensor
+
+from deeprecsys.neural_networks.policy_estimator import PolicyEstimator
 from deeprecsys.rl.agents.agent import ReinforcementLearning
-from typing import Any, List, Optional
-from deeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
 from deeprecsys.rl.experience_replay.buffer_parameters import (
     ExperienceReplayBufferParameters,
 )
-from deeprecsys.rl.neural_networks.policy_estimator import PolicyEstimator
-from torch import FloatTensor
+from deeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
 
 
 class ReinforceAgent(ReinforcementLearning):
-    &#34;&#34;&#34;Policy estimator using a value estimator as a baseline.
-    It&#39;s on-policy, for discrete action spaces, and episodic environments.&#34;&#34;&#34;
+    &#34;&#34;&#34;REINFORCE: Policy estimator using a value estimator as a baseline.
+    It&#39;s on-policy, for discrete action spaces, and episodic environments.
+    &#34;&#34;&#34;
+
+    buffer: ExperienceReplayBuffer
 
     def __init__(
         self,
         n_actions: int,
         state_size: int,
         hidden_layers: Optional[List[int]] = None,
-        discount_factor: int = 0.99,  # a.k.a gamma
-        learning_rate=1e-3,
+        discount_factor: float = 0.99,
+        learning_rate: float = 1e-3,
     ):
+        &#34;&#34;&#34;Start the network with the parameters provided.
+        The discount factor is commonly known as gamma.
+        &#34;&#34;&#34;
         self.episode_count = 0
         if not hidden_layers:
             hidden_layers = [state_size * 2, state_size * 2]
@@ -62,20 +70,22 @@ class ReinforceAgent(ReinforcementLearning):
         # starts the buffer
         self.reset_buffer()
 
-    def reset_buffer(self):
-        self.buffer = ExperienceReplayBuffer(
-            ExperienceReplayBufferParameters(10000, 1, 1)
-        )
+    def reset_buffer(self) -&gt; None:
+        &#34;&#34;&#34;Recreate the experience buffer, effectively forgetting all the experiences
+        collected so far.
+        &#34;&#34;&#34;
+        self.buffer = ExperienceReplayBuffer(ExperienceReplayBufferParameters(10000, 1, 1))
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; List[int]:
+        &#34;&#34;&#34;Return the k next best actions for the given state.&#34;&#34;&#34;
         return self.policy_estimator.predict(state, k=k)
 
     def action_for_state(self, state: Any) -&gt; int:
+        &#34;&#34;&#34;Return the best action for the given state.&#34;&#34;&#34;
         return self.top_k_actions_for_state(state)[0]
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+        &#34;&#34;&#34;Store the experience in the buffer and run the backpropagation if the buffer is ready.&#34;&#34;&#34;
         state_flat = state.flatten()
         new_state_flat = new_state.flatten()
         self.buffer.store_experience(state_flat, action, reward, done, new_state_flat)
@@ -87,7 +97,8 @@ class ReinforceAgent(ReinforcementLearning):
     def discounted_rewards(self, rewards: np.array) -&gt; np.array:
         &#34;&#34;&#34;From a list of rewards obtained in an episode, we calculate
         the return minus the baseline. The baseline is the list of discounted
-        rewards minus the mean, divided by the standard deviation.&#34;&#34;&#34;
+        rewards minus the mean, divided by the standard deviation.
+        &#34;&#34;&#34;
         discount_r = np.zeros_like(rewards)
         timesteps = range(len(rewards))
         reward_sum = 0
@@ -99,13 +110,12 @@ class ReinforceAgent(ReinforcementLearning):
         baseline = (discount_r - return_mean) / return_std
         return baseline
 
-    def learn_from_experiences(self):
+    def learn_from_experiences(self) -&gt; None:
+        &#34;&#34;&#34;Train the policy estimator with all the experiences collected so far.&#34;&#34;&#34;
         experiences = list(self.buffer.experience_queue)
-        states, actions, rewards, dones, next_states = zip(*experiences)
+        states, actions, rewards, dones, next_states = zip(*experiences, strict=False)
         advantages = self.discounted_rewards(rewards)
-        advantages_tensor = FloatTensor(advantages).to(
-            device=self.policy_estimator.device
-        )
+        advantages_tensor = FloatTensor(advantages).to(device=self.policy_estimator.device)
         self.policy_estimator.update(states, advantages_tensor, actions)</code></pre>
 </details>
 </section>
@@ -120,27 +130,35 @@ class ReinforceAgent(ReinforcementLearning):
 <dl>
 <dt id="deeprecsys.rl.agents.reinforce.ReinforceAgent"><code class="flex name class">
 <span>class <span class="ident">ReinforceAgent</span></span>
-<span>(</span><span>n_actions: int, state_size: int, hidden_layers: Union[List[int], NoneType] = None, discount_factor: int = 0.99, learning_rate=0.001)</span>
+<span>(</span><span>n_actions: int, state_size: int, hidden_layers: Optional[List[int]] = None, discount_factor: float = 0.99, learning_rate: float = 0.001)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Policy estimator using a value estimator as a baseline.
-It's on-policy, for discrete action spaces, and episodic environments.</p></div>
+<div class="desc"><p>REINFORCE: Policy estimator using a value estimator as a baseline.
+It's on-policy, for discrete action spaces, and episodic environments.</p>
+<p>Start the network with the parameters provided.
+The discount factor is commonly known as gamma.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ReinforceAgent(ReinforcementLearning):
-    &#34;&#34;&#34;Policy estimator using a value estimator as a baseline.
-    It&#39;s on-policy, for discrete action spaces, and episodic environments.&#34;&#34;&#34;
+    &#34;&#34;&#34;REINFORCE: Policy estimator using a value estimator as a baseline.
+    It&#39;s on-policy, for discrete action spaces, and episodic environments.
+    &#34;&#34;&#34;
+
+    buffer: ExperienceReplayBuffer
 
     def __init__(
         self,
         n_actions: int,
         state_size: int,
         hidden_layers: Optional[List[int]] = None,
-        discount_factor: int = 0.99,  # a.k.a gamma
-        learning_rate=1e-3,
+        discount_factor: float = 0.99,
+        learning_rate: float = 1e-3,
     ):
+        &#34;&#34;&#34;Start the network with the parameters provided.
+        The discount factor is commonly known as gamma.
+        &#34;&#34;&#34;
         self.episode_count = 0
         if not hidden_layers:
             hidden_layers = [state_size * 2, state_size * 2]
@@ -154,20 +172,22 @@ It's on-policy, for discrete action spaces, and episodic environments.</p></div>
         # starts the buffer
         self.reset_buffer()
 
-    def reset_buffer(self):
-        self.buffer = ExperienceReplayBuffer(
-            ExperienceReplayBufferParameters(10000, 1, 1)
-        )
+    def reset_buffer(self) -&gt; None:
+        &#34;&#34;&#34;Recreate the experience buffer, effectively forgetting all the experiences
+        collected so far.
+        &#34;&#34;&#34;
+        self.buffer = ExperienceReplayBuffer(ExperienceReplayBufferParameters(10000, 1, 1))
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; List[int]:
+        &#34;&#34;&#34;Return the k next best actions for the given state.&#34;&#34;&#34;
         return self.policy_estimator.predict(state, k=k)
 
     def action_for_state(self, state: Any) -&gt; int:
+        &#34;&#34;&#34;Return the best action for the given state.&#34;&#34;&#34;
         return self.top_k_actions_for_state(state)[0]
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+        &#34;&#34;&#34;Store the experience in the buffer and run the backpropagation if the buffer is ready.&#34;&#34;&#34;
         state_flat = state.flatten()
         new_state_flat = new_state.flatten()
         self.buffer.store_experience(state_flat, action, reward, done, new_state_flat)
@@ -179,7 +199,8 @@ It's on-policy, for discrete action spaces, and episodic environments.</p></div>
     def discounted_rewards(self, rewards: np.array) -&gt; np.array:
         &#34;&#34;&#34;From a list of rewards obtained in an episode, we calculate
         the return minus the baseline. The baseline is the list of discounted
-        rewards minus the mean, divided by the standard deviation.&#34;&#34;&#34;
+        rewards minus the mean, divided by the standard deviation.
+        &#34;&#34;&#34;
         discount_r = np.zeros_like(rewards)
         timesteps = range(len(rewards))
         reward_sum = 0
@@ -191,13 +212,12 @@ It's on-policy, for discrete action spaces, and episodic environments.</p></div>
         baseline = (discount_r - return_mean) / return_std
         return baseline
 
-    def learn_from_experiences(self):
+    def learn_from_experiences(self) -&gt; None:
+        &#34;&#34;&#34;Train the policy estimator with all the experiences collected so far.&#34;&#34;&#34;
         experiences = list(self.buffer.experience_queue)
-        states, actions, rewards, dones, next_states = zip(*experiences)
+        states, actions, rewards, dones, next_states = zip(*experiences, strict=False)
         advantages = self.discounted_rewards(rewards)
-        advantages_tensor = FloatTensor(advantages).to(
-            device=self.policy_estimator.device
-        )
+        advantages_tensor = FloatTensor(advantages).to(device=self.policy_estimator.device)
         self.policy_estimator.update(states, advantages_tensor, actions)</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -205,18 +225,26 @@ It's on-policy, for discrete action spaces, and episodic environments.</p></div>
 <li><a title="deeprecsys.rl.agents.agent.ReinforcementLearning" href="agent.html#deeprecsys.rl.agents.agent.ReinforcementLearning">ReinforcementLearning</a></li>
 <li>abc.ABC</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="deeprecsys.rl.agents.reinforce.ReinforceAgent.buffer"><code class="name">var <span class="ident">buffer</span> : <a title="deeprecsys.rl.experience_replay.experience_buffer.ExperienceReplayBuffer" href="../experience_replay/experience_buffer.html#deeprecsys.rl.experience_replay.experience_buffer.ExperienceReplayBuffer">ExperienceReplayBuffer</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Methods</h3>
 <dl>
 <dt id="deeprecsys.rl.agents.reinforce.ReinforceAgent.action_for_state"><code class="name flex">
 <span>def <span class="ident">action_for_state</span></span>(<span>self, state: Any) ‑> int</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Return the best action for the given state.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def action_for_state(self, state: Any) -&gt; int:
+    &#34;&#34;&#34;Return the best action for the given state.&#34;&#34;&#34;
     return self.top_k_actions_for_state(state)[0]</code></pre>
 </details>
 </dd>
@@ -234,7 +262,8 @@ rewards minus the mean, divided by the standard deviation.</p></div>
 <pre><code class="python">def discounted_rewards(self, rewards: np.array) -&gt; np.array:
     &#34;&#34;&#34;From a list of rewards obtained in an episode, we calculate
     the return minus the baseline. The baseline is the list of discounted
-    rewards minus the mean, divided by the standard deviation.&#34;&#34;&#34;
+    rewards minus the mean, divided by the standard deviation.
+    &#34;&#34;&#34;
     discount_r = np.zeros_like(rewards)
     timesteps = range(len(rewards))
     reward_sum = 0
@@ -248,51 +277,51 @@ rewards minus the mean, divided by the standard deviation.</p></div>
 </details>
 </dd>
 <dt id="deeprecsys.rl.agents.reinforce.ReinforceAgent.learn_from_experiences"><code class="name flex">
-<span>def <span class="ident">learn_from_experiences</span></span>(<span>self)</span>
+<span>def <span class="ident">learn_from_experiences</span></span>(<span>self) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Train the policy estimator with all the experiences collected so far.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def learn_from_experiences(self):
+<pre><code class="python">def learn_from_experiences(self) -&gt; None:
+    &#34;&#34;&#34;Train the policy estimator with all the experiences collected so far.&#34;&#34;&#34;
     experiences = list(self.buffer.experience_queue)
-    states, actions, rewards, dones, next_states = zip(*experiences)
+    states, actions, rewards, dones, next_states = zip(*experiences, strict=False)
     advantages = self.discounted_rewards(rewards)
-    advantages_tensor = FloatTensor(advantages).to(
-        device=self.policy_estimator.device
-    )
+    advantages_tensor = FloatTensor(advantages).to(device=self.policy_estimator.device)
     self.policy_estimator.update(states, advantages_tensor, actions)</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.agents.reinforce.ReinforceAgent.reset_buffer"><code class="name flex">
-<span>def <span class="ident">reset_buffer</span></span>(<span>self)</span>
+<span>def <span class="ident">reset_buffer</span></span>(<span>self) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Recreate the experience buffer, effectively forgetting all the experiences
+collected so far.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def reset_buffer(self):
-    self.buffer = ExperienceReplayBuffer(
-        ExperienceReplayBufferParameters(10000, 1, 1)
-    )</code></pre>
+<pre><code class="python">def reset_buffer(self) -&gt; None:
+    &#34;&#34;&#34;Recreate the experience buffer, effectively forgetting all the experiences
+    collected so far.
+    &#34;&#34;&#34;
+    self.buffer = ExperienceReplayBuffer(ExperienceReplayBufferParameters(10000, 1, 1))</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.agents.reinforce.ReinforceAgent.store_experience"><code class="name flex">
-<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, new_state: Any)</span>
+<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, new_state: Any) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Store the experience in the buffer and run the backpropagation if the buffer is ready.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def store_experience(
-    self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-):
+<pre><code class="python">def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+    &#34;&#34;&#34;Store the experience in the buffer and run the backpropagation if the buffer is ready.&#34;&#34;&#34;
     state_flat = state.flatten()
     new_state_flat = new_state.flatten()
     self.buffer.store_experience(state_flat, action, reward, done, new_state_flat)
@@ -306,12 +335,13 @@ rewards minus the mean, divided by the standard deviation.</p></div>
 <span>def <span class="ident">top_k_actions_for_state</span></span>(<span>self, state: Any, k: int = 1) ‑> List[int]</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Return the k next best actions for the given state.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; List[int]:
+    &#34;&#34;&#34;Return the k next best actions for the given state.&#34;&#34;&#34;
     return self.policy_estimator.predict(state, k=k)</code></pre>
 </details>
 </dd>
@@ -337,6 +367,7 @@ rewards minus the mean, divided by the standard deviation.</p></div>
 <h4><code><a title="deeprecsys.rl.agents.reinforce.ReinforceAgent" href="#deeprecsys.rl.agents.reinforce.ReinforceAgent">ReinforceAgent</a></code></h4>
 <ul class="">
 <li><code><a title="deeprecsys.rl.agents.reinforce.ReinforceAgent.action_for_state" href="#deeprecsys.rl.agents.reinforce.ReinforceAgent.action_for_state">action_for_state</a></code></li>
+<li><code><a title="deeprecsys.rl.agents.reinforce.ReinforceAgent.buffer" href="#deeprecsys.rl.agents.reinforce.ReinforceAgent.buffer">buffer</a></code></li>
 <li><code><a title="deeprecsys.rl.agents.reinforce.ReinforceAgent.discounted_rewards" href="#deeprecsys.rl.agents.reinforce.ReinforceAgent.discounted_rewards">discounted_rewards</a></code></li>
 <li><code><a title="deeprecsys.rl.agents.reinforce.ReinforceAgent.learn_from_experiences" href="#deeprecsys.rl.agents.reinforce.ReinforceAgent.learn_from_experiences">learn_from_experiences</a></code></li>
 <li><code><a title="deeprecsys.rl.agents.reinforce.ReinforceAgent.reset_buffer" href="#deeprecsys.rl.agents.reinforce.ReinforceAgent.reset_buffer">reset_buffer</a></code></li>
@@ -350,7 +381,7 @@ rewards minus the mean, divided by the standard deviation.</p></div>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>

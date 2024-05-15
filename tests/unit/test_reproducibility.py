@@ -5,29 +5,27 @@ from deeprecsys.rl.experience_replay.experience_buffer import (
     ExperienceReplayBuffer,
     ExperienceReplayBufferParameters,
 )
-from deeprecsys.rl.manager import CartpoleManager, MovieLensFairnessManager
+from deeprecsys.rl.manager import CartpoleManager
 
 SEED = 42
 
 
 def test_environment_seed() -> None:
     # given an environment
-    manager = MovieLensFairnessManager(seed=SEED)
+    manager = CartpoleManager(seed=SEED)
     # and an initial state
-    state = manager.env.reset()
+    state, _ = manager.env.reset(seed=SEED)
     # when we try to restart it several times
     for _ in range(3):
         # and we recreate the environment
-        manager = MovieLensFairnessManager(seed=SEED)
+        manager = CartpoleManager(seed=SEED)
         # then the initial state is always the same
-        assert (manager.env.reset() == state).all()
+        assert (manager.env.reset(seed=SEED)[0] == state).all()
 
 
 def _create_buffer(random_state: RandomState) -> ExperienceReplayBuffer:
     buffer = ExperienceReplayBuffer(
-        parameters=ExperienceReplayBufferParameters(
-            random_state=random_state, batch_size=1, max_experiences=200
-        )
+        parameters=ExperienceReplayBufferParameters(random_state=random_state, batch_size=1, max_experiences=200)
     )
     for i in range(200):
         buffer.store_experience(i, 0, 1, False, i + 1)

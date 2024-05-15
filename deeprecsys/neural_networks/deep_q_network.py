@@ -21,7 +21,8 @@ def sequential_architecture(layers: List[int], bias: bool = True) -> Module:
 
 class DeepQNetwork(BaseNetwork):
     """Implementation of a Deep Q Network with a Sequential arquitecture. Layers are
-    supposed to be provided as a list of torch modules."""
+    supposed to be provided as a list of torch modules.
+    """
 
     def __init__(
         self,
@@ -66,16 +67,12 @@ class DeepQNetwork(BaseNetwork):
         state_tensors = FloatTensor(states).to(device=self.device)
         next_state_tensors = FloatTensor(next_states).to(device=self.device)
         reward_tensors = FloatTensor(rewards).to(device=self.device).reshape(-1, 1)
-        action_tensors = (
-            LongTensor(array(actions)).reshape(-1, 1).to(device=self.device)
-        )
+        action_tensors = LongTensor(array(actions)).reshape(-1, 1).to(device=self.device)
         done_tensors = BoolTensor(dones).to(device=self.device)
         actions_for_states = self.model(state_tensors)
         q_vals = gather(actions_for_states, 1, action_tensors)
         next_actions = [self.best_action_for_state(s) for s in next_states]
-        next_action_tensors = (
-            LongTensor(next_actions).reshape(-1, 1).to(device=self.device)
-        )
+        next_action_tensors = LongTensor(next_actions).reshape(-1, 1).to(device=self.device)
         q_vals_next = gather(self.model(next_state_tensors), 1, next_action_tensors)
         q_vals_next[done_tensors] = 0
         expected_q_vals = self.discount_factor * q_vals_next + reward_tensors

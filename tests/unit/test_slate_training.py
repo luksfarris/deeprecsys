@@ -5,6 +5,7 @@ from deeprecsys.rl.agents.reinforce import ReinforceAgent
 from deeprecsys.rl.manager import MovieLensFairnessManager
 
 
+@pytest.mark.skip(reason="Find another slated env")
 @pytest.mark.parametrize("slate_size", [5, 10, 30])
 def test_slate_interaction(slate_size: int) -> None:
     manager = MovieLensFairnessManager(slate_size=slate_size, seed=42)
@@ -15,6 +16,7 @@ def test_slate_interaction(slate_size: int) -> None:
     assert env.step(example_action) is not None
 
 
+@pytest.mark.skip(reason="Find another slated env")
 @pytest.mark.parametrize("slate_size", [5, 10, 30])
 def test_slate_random_training(slate_size: int) -> None:
     manager = MovieLensFairnessManager(slate_size=slate_size, seed=42)
@@ -22,6 +24,7 @@ def test_slate_random_training(slate_size: int) -> None:
     manager.train(agent, max_episodes=30)
 
 
+@pytest.mark.skip(reason="Find another slated env")
 @pytest.mark.parametrize("slate_size", [5, 10, 30])
 def test_slate_reinforce_training(slate_size: int) -> None:
     manager = MovieLensFairnessManager(slate_size=slate_size, seed=42)

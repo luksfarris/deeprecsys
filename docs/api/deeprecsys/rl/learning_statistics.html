@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>deeprecsys.rl.learning_statistics API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -26,26 +26,29 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import matplotlib.pyplot as plt
+<pre><code class="python">from typing import Any, Dict, List, Optional
+
+import matplotlib.pyplot as plt
 import pandas
 import seaborn as sns
-from typing import Any, List, Dict, Optional
 
 sns.set_theme()
 sns.set_context(&#34;paper&#34;)
 
 
 class LearningStatistics:
-    def __init__(
-        self, model_name: Optional[str] = None, env_name: Optional[str] = None
-    ):
+    &#34;&#34;&#34;Special class to store and aggregate learning parameters.&#34;&#34;&#34;
+
+    def __init__(self, model_name: Optional[str] = None, env_name: Optional[str] = None):
+        &#34;&#34;&#34;Start the collector for the given model and environment name.&#34;&#34;&#34;
         self.collected_metrics: List[Dict] = []
         self.model_name = model_name
         self.env_name = env_name
         self.timestep = 0
         self.episode = 0
 
-    def append_metric(self, metric_name: str, metric_value: Any):
+    def append_metric(self, metric_name: str, metric_value: Any) -&gt; None:
+        &#34;&#34;&#34;Store the metric with the given name and value.&#34;&#34;&#34;
         self.collected_metrics.append(
             {
                 &#34;metric&#34;: metric_name,
@@ -60,6 +63,7 @@ class LearningStatistics:
     def get_metrics(
         self, metric_name: str, model: Optional[str] = None, env: Optional[str] = None
     ) -&gt; Optional[pandas.Series]:
+        &#34;&#34;&#34;Get all the collected metrics for the given name, model, and environment.&#34;&#34;&#34;
         measurements = [
             v[&#34;measurement&#34;]
             for v in self.collected_metrics
@@ -67,28 +71,36 @@ class LearningStatistics:
         ]
         if measurements:
             return pandas.Series(measurements)
+        else:
+            return None
 
     @property
     def moving_rewards(self) -&gt; Optional[pandas.Series]:
+        &#34;&#34;&#34;Get the moving average of the rewards observed so far.&#34;&#34;&#34;
         return self.get_metrics(&#34;moving_rewards&#34;)
 
     @property
     def episode_rewards(self) -&gt; Optional[pandas.Series]:
+        &#34;&#34;&#34;Get the reward values stored so far.&#34;&#34;&#34;
         return self.get_metrics(&#34;episode_rewards&#34;)
 
     @property
     def epsilon_values(self) -&gt; Optional[pandas.Series]:
+        &#34;&#34;&#34;Get the epsilon values stored so far.&#34;&#34;&#34;
         return self.get_metrics(&#34;epsilon_values&#34;)
 
     @property
     def loss_values(self) -&gt; Optional[pandas.Series]:
+        &#34;&#34;&#34;Get the loss values stored so far.&#34;&#34;&#34;
         return self.get_metrics(&#34;loss&#34;)
 
-    def plot_rewards(self):
+    def plot_rewards(self) -&gt; None:
+        &#34;&#34;&#34;Plot the rewards obtaining so far.&#34;&#34;&#34;
         self.episode_rewards.plot()
         self.moving_rewards.plot()
 
-    def plot_learning_stats(self):
+    def plot_learning_stats(self) -&gt; None:
+        &#34;&#34;&#34;Plot the relevant reinforcement learning metrics.&#34;&#34;&#34;
         # generate subplots
         fig, axs = plt.subplots(2, 2)
         fig.suptitle(&#34;Agent learning metrics&#34;)
@@ -115,25 +127,28 @@ class LearningStatistics:
 <dl>
 <dt id="deeprecsys.rl.learning_statistics.LearningStatistics"><code class="flex name class">
 <span>class <span class="ident">LearningStatistics</span></span>
-<span>(</span><span>model_name: Union[str, NoneType] = None, env_name: Union[str, NoneType] = None)</span>
+<span>(</span><span>model_name: Optional[str] = None, env_name: Optional[str] = None)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Special class to store and aggregate learning parameters.</p>
+<p>Start the collector for the given model and environment name.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class LearningStatistics:
-    def __init__(
-        self, model_name: Optional[str] = None, env_name: Optional[str] = None
-    ):
+    &#34;&#34;&#34;Special class to store and aggregate learning parameters.&#34;&#34;&#34;
+
+    def __init__(self, model_name: Optional[str] = None, env_name: Optional[str] = None):
+        &#34;&#34;&#34;Start the collector for the given model and environment name.&#34;&#34;&#34;
         self.collected_metrics: List[Dict] = []
         self.model_name = model_name
         self.env_name = env_name
         self.timestep = 0
         self.episode = 0
 
-    def append_metric(self, metric_name: str, metric_value: Any):
+    def append_metric(self, metric_name: str, metric_value: Any) -&gt; None:
+        &#34;&#34;&#34;Store the metric with the given name and value.&#34;&#34;&#34;
         self.collected_metrics.append(
             {
                 &#34;metric&#34;: metric_name,
@@ -148,6 +163,7 @@ class LearningStatistics:
     def get_metrics(
         self, metric_name: str, model: Optional[str] = None, env: Optional[str] = None
     ) -&gt; Optional[pandas.Series]:
+        &#34;&#34;&#34;Get all the collected metrics for the given name, model, and environment.&#34;&#34;&#34;
         measurements = [
             v[&#34;measurement&#34;]
             for v in self.collected_metrics
@@ -155,28 +171,36 @@ class LearningStatistics:
         ]
         if measurements:
             return pandas.Series(measurements)
+        else:
+            return None
 
     @property
     def moving_rewards(self) -&gt; Optional[pandas.Series]:
+        &#34;&#34;&#34;Get the moving average of the rewards observed so far.&#34;&#34;&#34;
         return self.get_metrics(&#34;moving_rewards&#34;)
 
     @property
     def episode_rewards(self) -&gt; Optional[pandas.Series]:
+        &#34;&#34;&#34;Get the reward values stored so far.&#34;&#34;&#34;
         return self.get_metrics(&#34;episode_rewards&#34;)
 
     @property
     def epsilon_values(self) -&gt; Optional[pandas.Series]:
+        &#34;&#34;&#34;Get the epsilon values stored so far.&#34;&#34;&#34;
         return self.get_metrics(&#34;epsilon_values&#34;)
 
     @property
     def loss_values(self) -&gt; Optional[pandas.Series]:
+        &#34;&#34;&#34;Get the loss values stored so far.&#34;&#34;&#34;
         return self.get_metrics(&#34;loss&#34;)
 
-    def plot_rewards(self):
+    def plot_rewards(self) -&gt; None:
+        &#34;&#34;&#34;Plot the rewards obtaining so far.&#34;&#34;&#34;
         self.episode_rewards.plot()
         self.moving_rewards.plot()
 
-    def plot_learning_stats(self):
+    def plot_learning_stats(self) -&gt; None:
+        &#34;&#34;&#34;Plot the relevant reinforcement learning metrics.&#34;&#34;&#34;
         # generate subplots
         fig, axs = plt.subplots(2, 2)
         fig.suptitle(&#34;Agent learning metrics&#34;)
@@ -193,51 +217,55 @@ class LearningStatistics:
 </details>
 <h3>Instance variables</h3>
 <dl>
-<dt id="deeprecsys.rl.learning_statistics.LearningStatistics.episode_rewards"><code class="name">var <span class="ident">episode_rewards</span> : Union[pandas.core.series.Series, NoneType]</code></dt>
+<dt id="deeprecsys.rl.learning_statistics.LearningStatistics.episode_rewards"><code class="name">var <span class="ident">episode_rewards</span> : Optional[pandas.core.series.Series]</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Get the reward values stored so far.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def episode_rewards(self) -&gt; Optional[pandas.Series]:
+    &#34;&#34;&#34;Get the reward values stored so far.&#34;&#34;&#34;
     return self.get_metrics(&#34;episode_rewards&#34;)</code></pre>
 </details>
 </dd>
-<dt id="deeprecsys.rl.learning_statistics.LearningStatistics.epsilon_values"><code class="name">var <span class="ident">epsilon_values</span> : Union[pandas.core.series.Series, NoneType]</code></dt>
+<dt id="deeprecsys.rl.learning_statistics.LearningStatistics.epsilon_values"><code class="name">var <span class="ident">epsilon_values</span> : Optional[pandas.core.series.Series]</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Get the epsilon values stored so far.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def epsilon_values(self) -&gt; Optional[pandas.Series]:
+    &#34;&#34;&#34;Get the epsilon values stored so far.&#34;&#34;&#34;
     return self.get_metrics(&#34;epsilon_values&#34;)</code></pre>
 </details>
 </dd>
-<dt id="deeprecsys.rl.learning_statistics.LearningStatistics.loss_values"><code class="name">var <span class="ident">loss_values</span> : Union[pandas.core.series.Series, NoneType]</code></dt>
+<dt id="deeprecsys.rl.learning_statistics.LearningStatistics.loss_values"><code class="name">var <span class="ident">loss_values</span> : Optional[pandas.core.series.Series]</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Get the loss values stored so far.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def loss_values(self) -&gt; Optional[pandas.Series]:
+    &#34;&#34;&#34;Get the loss values stored so far.&#34;&#34;&#34;
     return self.get_metrics(&#34;loss&#34;)</code></pre>
 </details>
 </dd>
-<dt id="deeprecsys.rl.learning_statistics.LearningStatistics.moving_rewards"><code class="name">var <span class="ident">moving_rewards</span> : Union[pandas.core.series.Series, NoneType]</code></dt>
+<dt id="deeprecsys.rl.learning_statistics.LearningStatistics.moving_rewards"><code class="name">var <span class="ident">moving_rewards</span> : Optional[pandas.core.series.Series]</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Get the moving average of the rewards observed so far.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def moving_rewards(self) -&gt; Optional[pandas.Series]:
+    &#34;&#34;&#34;Get the moving average of the rewards observed so far.&#34;&#34;&#34;
     return self.get_metrics(&#34;moving_rewards&#34;)</code></pre>
 </details>
 </dd>
@@ -245,15 +273,16 @@ def moving_rewards(self) -&gt; Optional[pandas.Series]:
 <h3>Methods</h3>
 <dl>
 <dt id="deeprecsys.rl.learning_statistics.LearningStatistics.append_metric"><code class="name flex">
-<span>def <span class="ident">append_metric</span></span>(<span>self, metric_name: str, metric_value: Any)</span>
+<span>def <span class="ident">append_metric</span></span>(<span>self, metric_name: str, metric_value: Any) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Store the metric with the given name and value.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def append_metric(self, metric_name: str, metric_value: Any):
+<pre><code class="python">def append_metric(self, metric_name: str, metric_value: Any) -&gt; None:
+    &#34;&#34;&#34;Store the metric with the given name and value.&#34;&#34;&#34;
     self.collected_metrics.append(
         {
             &#34;metric&#34;: metric_name,
@@ -267,10 +296,10 @@ def moving_rewards(self) -&gt; Optional[pandas.Series]:
 </details>
 </dd>
 <dt id="deeprecsys.rl.learning_statistics.LearningStatistics.get_metrics"><code class="name flex">
-<span>def <span class="ident">get_metrics</span></span>(<span>self, metric_name: str, model: Union[str, NoneType] = None, env: Union[str, NoneType] = None) ‑> Union[pandas.core.series.Series, NoneType]</span>
+<span>def <span class="ident">get_metrics</span></span>(<span>self, metric_name: str, model: Optional[str] = None, env: Optional[str] = None) ‑> Optional[pandas.core.series.Series]</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Get all the collected metrics for the given name, model, and environment.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -278,25 +307,29 @@ def moving_rewards(self) -&gt; Optional[pandas.Series]:
 <pre><code class="python">def get_metrics(
     self, metric_name: str, model: Optional[str] = None, env: Optional[str] = None
 ) -&gt; Optional[pandas.Series]:
+    &#34;&#34;&#34;Get all the collected metrics for the given name, model, and environment.&#34;&#34;&#34;
     measurements = [
         v[&#34;measurement&#34;]
         for v in self.collected_metrics
         if (v[&#34;metric&#34;] == metric_name and v[&#34;model&#34;] == model and v[&#34;env&#34;] == env)
     ]
     if measurements:
-        return pandas.Series(measurements)</code></pre>
+        return pandas.Series(measurements)
+    else:
+        return None</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.learning_statistics.LearningStatistics.plot_learning_stats"><code class="name flex">
-<span>def <span class="ident">plot_learning_stats</span></span>(<span>self)</span>
+<span>def <span class="ident">plot_learning_stats</span></span>(<span>self) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Plot the relevant reinforcement learning metrics.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def plot_learning_stats(self):
+<pre><code class="python">def plot_learning_stats(self) -&gt; None:
+    &#34;&#34;&#34;Plot the relevant reinforcement learning metrics.&#34;&#34;&#34;
     # generate subplots
     fig, axs = plt.subplots(2, 2)
     fig.suptitle(&#34;Agent learning metrics&#34;)
@@ -313,15 +346,16 @@ def moving_rewards(self) -&gt; Optional[pandas.Series]:
 </details>
 </dd>
 <dt id="deeprecsys.rl.learning_statistics.LearningStatistics.plot_rewards"><code class="name flex">
-<span>def <span class="ident">plot_rewards</span></span>(<span>self)</span>
+<span>def <span class="ident">plot_rewards</span></span>(<span>self) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Plot the rewards obtaining so far.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def plot_rewards(self):
+<pre><code class="python">def plot_rewards(self) -&gt; None:
+    &#34;&#34;&#34;Plot the rewards obtaining so far.&#34;&#34;&#34;
     self.episode_rewards.plot()
     self.moving_rewards.plot()</code></pre>
 </details>
@@ -363,7 +397,7 @@ def moving_rewards(self) -&gt; Optional[pandas.Series]:
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>

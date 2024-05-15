@@ -2,14 +2,12 @@ import math
 from collections import defaultdict, namedtuple
 from typing import Any, Generator, List, Optional
 
-import highway_env  # noqa: F401
 import numpy as np
 import torch
-from gym import Env, make, spec
+from gymnasium import Env, make, spec
 from numpy.core.multiarray import ndarray
 from numpy.random import RandomState
 
-import deeprecsys.movielens_fairness_env  # noqa: F401
 from deeprecsys.rl import Logger
 from deeprecsys.rl.agents.agent import ReinforcementLearning
 from deeprecsys.rl.learning_statistics import LearningStatistics
@@ -22,11 +20,13 @@ EpisodeOutput = namedtuple("EpisodeOutput", "timesteps,reward_sum")
 logger = Logger.create()
 
 
-class Manager(object):
+class Manager:
     """Class for learning from gym environments with some convenience methods."""
 
     env_name: str
     env: Any
+    seed: int | None = None
+    random_state: RandomState | None = None
 
     def __init__(
         self,
@@ -38,19 +38,13 @@ class Manager(object):
         **kwargs: Any,
     ) -> None:
         """Start the manager"""
-        if any(
-            [env_name is None and env is None, env_name is not None and env is not None]
-        ):
+        if any([env_name is None and env is None, env_name is not None and env is not None]):
             raise ValueError("Must specify exactly one of [env_name, env]")
         if env_name is not None:
             self.env_name = env_name
             # extract some parameters from the environment
-            self.max_episode_steps = (
-                spec(self.env_name).max_episode_steps or max_episode_steps
-            )
-            self.reward_threshold = (
-                spec(self.env_name).reward_threshold or reward_threshold
-            )
+            self.max_episode_steps = spec(self.env_name).max_episode_steps or max_episode_steps
+            self.reward_threshold = spec(self.env_name).reward_threshold or reward_threshold
             # create the environment
             self.env = make(env_name, **kwargs)
             # we seed the environment so that results are reproducible
@@ -77,10 +71,11 @@ class Manager(object):
         should_render: bool = False,
     ) -> List[EpisodeOutput]:
         """Execute any number of episodes with the given agent.
-        Returns the number of timesteps and sum of rewards per episode."""
+        Returns the number of timesteps and sum of rewards per episode.
+        """
         episode_outputs = []
         for episode in range(n_episodes):
-            t, reward_sum, done, state = 0, 0, False, self.env.reset()
+            t, reward_sum, done, (state, _) = 0, 0, False, self.env.reset(seed=self.seed)
             logger.info(f"Running episode {episode}, starting at state {state}")
             while not done and t < self.max_episode_steps:
                 if should_render:
@@ -106,9 +101,7 @@ class Manager(object):
             statistics.timestep += 1
 
     @staticmethod
-    def _train_add_statistics(
-        statistics: LearningStatistics, rewards: List, moving_average: ndarray
-    ) -> None:
+    def _train_add_statistics(statistics: LearningStatistics, rewards: List, moving_average: ndarray) -> None:
         if statistics:
             statistics.append_metric("episode_rewards", sum(rewards))
             statistics.append_metric("timestep_rewards", rewards)
@@ -130,13 +123,13 @@ class Manager(object):
         logger.info("Training...")
         episode_rewards = []
         for episode in range(max_episodes):
-            state = self.env.reset()
+            state, info = self.env.reset(seed=self.seed)
             rewards = []
             self._train_start_new_episode(statistics, episode)
             done = False
             while done is False:
                 action = self._train_get_step_action(rl, state)
-                new_state, reward, done, info = self.env.step(action)
+                new_state, reward, done, _, info = self.env.step(action)
                 if "chosen_action" in info:
                     action = action[info["chosen_action"]]
                 rl.store_experience(state, action, reward, done, new_state)
@@ -189,7 +182,7 @@ class Manager(object):
         for the given number of episodes, and will run the determined number of times.
         """
         combination_results = defaultdict(lambda: [])
-        for (p_name, p_value) in params.items():
+        for p_name, p_value in params.items():
             if len(p_value) < 2:
                 continue
             for value in p_value:
@@ -208,9 +201,7 @@ class Manager(object):
 
         return combination_results
 
-    def setup_reproducibility(
-        self, seed: Optional[int] = None
-    ) -> Optional[RandomState]:
+    def setup_reproducibility(self, seed: Optional[int] = None) -> Optional[RandomState]:
         """Seeds the project's libraries: numpy, torch, gym"""
         if seed:
             # seed pytorch
@@ -220,7 +211,7 @@ class Manager(object):
             # seed numpy
             np.random.seed(seed)
             # seed gym
-            self.env.seed(seed)
+            self.seed = seed
             self.random_state = RandomState(seed)
             return self.random_state
         return None
@@ -241,7 +232,7 @@ class CartpoleManager(Manager):
 
     def __init__(self, seed: Optional[int] = None):
         """Start the manager"""
-        super().__init__(env_name="CartPole-v0", seed=seed)
+        super().__init__(env_name="CartPole-v1", seed=seed)
         self.reward_threshold = 50
 
 
@@ -258,6 +249,4 @@ class MovieLensFairnessManager(Manager):
 
     def __init__(self, seed: Optional[int] = None, slate_size: int = 1):
         """Start the manager"""
-        super().__init__(
-            env_name="MovieLensFairness-v0", seed=seed, slate_size=slate_size
-        )
+        super().__init__(env_name="MovieLensFairness-v0", seed=seed, slate_size=slate_size)

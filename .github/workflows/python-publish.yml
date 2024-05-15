@@ -2,42 +2,46 @@ name: Master Deploy
 
 on:
   push:
-    branches:    
-      - 'master'
+    branches:
+      - "master"
 
 permissions:
   contents: write
 
 jobs:
   deploy:
-
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.7'
-    - name: Install dependencies and test
-      run: |
-        python -m pip install pip==22.2.2 setuptools==65.3.0 wheel==0.37.1
-        pip install poetry==1.1.15
-        poetry install
-        poetry run coverage run -m pytest
-    - name: Generate Documentation
-      run: |
-        poetry run coverage html -d docs/coverage
-        poetry run pdoc --html --force deeprecsys -o docs/api
-    - name: Version Bump
-      run: |
-        poetry version patch
-        git config --global user.name 'Github Actions'
-        git config --global user.email 'luksfarris@users.noreply.github.com'
-        git commit -am "Bump to version $(poetry version -s)"
-        git push
-    - name: Build package and publish
-      run: |
-        poetry build
-        poetry config pypi-token.pypi ${{ secrets.PYPI_KEY }}
-        poetry publish
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.11"
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.37.1
+      - name: Install dependencies and test
+        run: |
+          task setup
+          venv/bin/poetry run pre-commit uninstall
+          task test
+      - name: Generate Documentation
+        run: |
+          task docs
+      - name: Version Bump
+        run: |
+          task bump
+          git push
+          git push origin v$(task version)
+      - name: Build package and publish
+        env:
+          PYPI_KEY: ${{ secrets.PYPI_KEY }}
+        run: |
+          task publish
+      - name: Publish Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO_NAME: ${{ github.repository }}
+          TAG: $(task version)
+        run: gh release create "$TAG" --repo="$REPO_NAME" --title="$TAG" --generate-notes

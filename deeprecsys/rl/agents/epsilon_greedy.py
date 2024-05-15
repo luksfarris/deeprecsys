@@ -26,7 +26,8 @@ class DecayingEpsilonGreedy(ReinforcementLearning, ABC):
 
     def action_for_state(self, state: Any) -> Any:
         """With probability epsilon, we explore by sampling one of the random available actions.
-        Otherwise we exploit by chosing the action with the highest Q value."""
+        Otherwise we exploit by chosing the action with the highest Q value.
+        """
         if self.random_state.random() < self.epsilon:
             action = self.explore()
         else:
@@ -35,9 +36,7 @@ class DecayingEpsilonGreedy(ReinforcementLearning, ABC):
 
     def _decay(self) -> None:
         """Slowly decrease the exploration probability."""
-        self.epsilon = max(
-            self.epsilon * self.decay_rate, self.minimum_exploration_probability
-        )
+        self.epsilon = max(self.epsilon * self.decay_rate, self.minimum_exploration_probability)
 
     @abstractmethod
     def explore(self) -> Any:

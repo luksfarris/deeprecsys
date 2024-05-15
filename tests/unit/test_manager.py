@@ -1,14 +1,14 @@
 from deeprecsys.rl.agents.reinforce import ReinforceAgent
-from deeprecsys.rl.manager import MovieLensFairnessManager
+from deeprecsys.rl.manager import CartpoleManager
 
 
-def test_movie_lens_manager() -> None:
-    manager = MovieLensFairnessManager()
+def test_manager_init() -> None:
+    manager = CartpoleManager()
     assert manager.env is not None
 
 
 def test_hyperparameter_search() -> None:
-    manager = MovieLensFairnessManager()
+    manager = CartpoleManager()
     agent = ReinforceAgent
 
     default_params = {

@@ -17,16 +17,15 @@ class ExperienceReplayBufferParameters:
         if minimum_experiences_to_start_predicting < batch_size:
             raise ValueError("The batch size mus the larger than the burn in")
         self.max_experiences = max_experiences
-        self.minimum_experiences_to_start_predicting = (
-            minimum_experiences_to_start_predicting
-        )
+        self.minimum_experiences_to_start_predicting = minimum_experiences_to_start_predicting
         self.batch_size = batch_size
         self.random_state = random_state
 
 
 class PERBufferParameters:
     """Parameters to configure the prioritization of experiences in a
-    Prioritized-Experience Replay Buffer"""
+    Prioritized-Experience Replay Buffer
+    """
 
     def __init__(
         self,

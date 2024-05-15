@@ -12,7 +12,8 @@ from deeprecsys.neural_networks.base_network import BaseNetwork
 
 class PolicyEstimator(BaseNetwork):
     """Estimates the policy function: the probability of each action being the
-    best decision in a particular state."""
+    best decision in a particular state.
+    """
 
     def __init__(
         self,
@@ -37,12 +38,14 @@ class PolicyEstimator(BaseNetwork):
 
     def action_probabilities(self, state: Any) -> Tensor:
         """Return a map of each possible action, and the probability that that's the best action to take at
-        this step."""
+        this step.
+        """
         return self.model(FloatTensor(state))
 
     def predict(self, state: Any, k: int = 1) -> List[int]:
         """Given a state, uses the network output to choose the `k` best next actions according to the probability
-        distribution trained so far."""
+        distribution trained so far.
+        """
         probabilities = self.action_probabilities(state)
         prediction = multinomial(probabilities, num_samples=k, replacement=False)
         if self.device == "cuda":
@@ -50,14 +53,10 @@ class PolicyEstimator(BaseNetwork):
         else:
             return prediction.detach().numpy()
 
-    def update(
-        self, state: np.array, reward_baseline: Tensor, action: np.array
-    ) -> np.ndarray:
+    def update(self, state: np.array, reward_baseline: Tensor, action: np.array) -> np.ndarray:
         """Update the network with the given state, reward, and action taken."""
         state_tensor = FloatTensor(state).to(device=self.device)
-        action_tensor = FloatTensor(np.array(action, dtype=np.float32)).to(
-            device=self.device
-        )
+        action_tensor = FloatTensor(np.array(action, dtype=np.float32)).to(device=self.device)
         """ Update logic from the Policy Gradient theorem. """
         action_probabilities = self.model(state_tensor)
         action_distribution = Categorical(action_probabilities)

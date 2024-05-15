@@ -20,7 +20,8 @@ class RainbowDQNAgent(ReinforcementLearning):
     """Instead of sampling randomly from the buffer we prioritize experiences with PER
     Instead of epsilon-greedy we use gaussian noisy layers for exploration
     Instead of the Q value we calculate Value and Advantage (Dueling DQN).
-    This implementation does not include the Categorical DQN part (yet)."""
+    This implementation does not include the Categorical DQN part (yet).
+    """
 
     def __init__(
         self,
@@ -98,9 +99,7 @@ class RainbowDQNAgent(ReinforcementLearning):
         """Get the next best action for the given state."""
         return self.top_k_actions_for_state(state, k=1)[0]
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ) -> None:
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -> None:
         """Store the experience in the buffer"""
         state_flat = state.flatten()
         new_state_flat = new_state.flatten()

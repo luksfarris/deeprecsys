@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>deeprecsys.rl.agents.dqn API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -26,22 +26,24 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from numpy.random import RandomState
-from typing import List, Any
+<pre><code class="python">from typing import Any, List, Optional
+
 from numpy import arange
-from deeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
-from deeprecsys.rl.experience_replay.buffer_parameters import (
-    ExperienceReplayBufferParameters,
-)
-from deeprecsys.rl.agents.epsilon_greedy import DecayingEpsilonGreedy
-from deeprecsys.rl.neural_networks.deep_q_network import (
+from numpy.random import RandomState
+
+from deeprecsys.neural_networks.deep_q_network import (
     DeepQNetwork,
     sequential_architecture,
 )
+from deeprecsys.rl.agents.epsilon_greedy import DecayingEpsilonGreedy
+from deeprecsys.rl.experience_replay.buffer_parameters import (
+    ExperienceReplayBufferParameters,
+)
+from deeprecsys.rl.experience_replay.experience_buffer import ExperienceReplayBuffer
 
 
 class DQNAgent(DecayingEpsilonGreedy):
-    &#34;&#34;&#34; TODO: This agent needs to be fixed&#34;&#34;&#34;
+    &#34;&#34;&#34;TODO: This agent needs to be fixed&#34;&#34;&#34;
 
     def __init__(
         self,
@@ -51,14 +53,17 @@ class DQNAgent(DecayingEpsilonGreedy):
         network_update_frequency: int = 3,
         initial_exploration_probability: float = 1.0,
         decay_rate: float = 0.99,
-        minimum_exploration_probability=0.05,
+        minimum_exploration_probability: float = 0.05,
         buffer_size: int = 10000,
         buffer_burn_in: int = 1000,
         batch_size: int = 32,
         discount_factor: float = 0.99,
         learning_rate: float = 0.99,
-        random_state: RandomState = RandomState(),
-    ):
+        random_state: Optional[RandomState] = None,
+    ) -&gt; None:
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
+        if random_state is None:
+            random_state = RandomState()
         super().__init__(
             initial_exploration_probability,
             decay_rate,
@@ -66,9 +71,7 @@ class DQNAgent(DecayingEpsilonGreedy):
             random_state,
         )
 
-        architecture = sequential_architecture(
-            [input_size] + hidden_layers + [output_size]
-        )
+        architecture = sequential_architecture([input_size] + hidden_layers + [output_size])
         self.network = DeepQNetwork(learning_rate, architecture, discount_factor)
         self.buffer = ExperienceReplayBuffer(
             ExperienceReplayBufferParameters(
@@ -82,7 +85,7 @@ class DQNAgent(DecayingEpsilonGreedy):
         self.network_update_frequency = network_update_frequency
         self.actions = arange(output_size)
 
-    def _check_update_network(self):
+    def _check_update_network(self) -&gt; None:
         if self.buffer.ready_to_predict():
             self.step_count += 1
             if self.step_count == self.network_update_frequency:
@@ -91,6 +94,7 @@ class DQNAgent(DecayingEpsilonGreedy):
                 self.network.learn_from(batch)
 
     def action_for_state(self, state: Any) -&gt; Any:
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
         state_flat = state.flatten()
         if self.buffer.ready_to_predict():
             action = super().action_for_state(state_flat)
@@ -100,18 +104,18 @@ class DQNAgent(DecayingEpsilonGreedy):
         return action
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
-        # TODO:
-        pass
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
 
-    def explore(self):
+    def explore(self) -&gt; float:
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
         return self.random_state.choice(self.actions)
 
-    def exploit(self, state: Any):
+    def exploit(self, state: Any) -&gt; float:
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
         return self.network.best_action_for_state(state)
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
         if done and self.buffer.ready_to_predict():
             self._decay()
         state_flat = state.flatten()
@@ -130,16 +134,17 @@ class DQNAgent(DecayingEpsilonGreedy):
 <dl>
 <dt id="deeprecsys.rl.agents.dqn.DQNAgent"><code class="flex name class">
 <span>class <span class="ident">DQNAgent</span></span>
-<span>(</span><span>input_size: int, output_size: int, hidden_layers: List, network_update_frequency: int = 3, initial_exploration_probability: float = 1.0, decay_rate: float = 0.99, minimum_exploration_probability=0.05, buffer_size: int = 10000, buffer_burn_in: int = 1000, batch_size: int = 32, discount_factor: float = 0.99, learning_rate: float = 0.99, random_state: numpy.random.mtrand.RandomState = RandomState(MT19937))</span>
+<span>(</span><span>input_size: int, output_size: int, hidden_layers: List, network_update_frequency: int = 3, initial_exploration_probability: float = 1.0, decay_rate: float = 0.99, minimum_exploration_probability: float = 0.05, buffer_size: int = 10000, buffer_burn_in: int = 1000, batch_size: int = 32, discount_factor: float = 0.99, learning_rate: float = 0.99, random_state: Optional[numpy.random.mtrand.RandomState] = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>TODO: This agent needs to be fixed</p></div>
+<div class="desc"><p>TODO: This agent needs to be fixed</p>
+<p>TODO</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DQNAgent(DecayingEpsilonGreedy):
-    &#34;&#34;&#34; TODO: This agent needs to be fixed&#34;&#34;&#34;
+    &#34;&#34;&#34;TODO: This agent needs to be fixed&#34;&#34;&#34;
 
     def __init__(
         self,
@@ -149,14 +154,17 @@ class DQNAgent(DecayingEpsilonGreedy):
         network_update_frequency: int = 3,
         initial_exploration_probability: float = 1.0,
         decay_rate: float = 0.99,
-        minimum_exploration_probability=0.05,
+        minimum_exploration_probability: float = 0.05,
         buffer_size: int = 10000,
         buffer_burn_in: int = 1000,
         batch_size: int = 32,
         discount_factor: float = 0.99,
         learning_rate: float = 0.99,
-        random_state: RandomState = RandomState(),
-    ):
+        random_state: Optional[RandomState] = None,
+    ) -&gt; None:
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
+        if random_state is None:
+            random_state = RandomState()
         super().__init__(
             initial_exploration_probability,
             decay_rate,
@@ -164,9 +172,7 @@ class DQNAgent(DecayingEpsilonGreedy):
             random_state,
         )
 
-        architecture = sequential_architecture(
-            [input_size] + hidden_layers + [output_size]
-        )
+        architecture = sequential_architecture([input_size] + hidden_layers + [output_size])
         self.network = DeepQNetwork(learning_rate, architecture, discount_factor)
         self.buffer = ExperienceReplayBuffer(
             ExperienceReplayBufferParameters(
@@ -180,7 +186,7 @@ class DQNAgent(DecayingEpsilonGreedy):
         self.network_update_frequency = network_update_frequency
         self.actions = arange(output_size)
 
-    def _check_update_network(self):
+    def _check_update_network(self) -&gt; None:
         if self.buffer.ready_to_predict():
             self.step_count += 1
             if self.step_count == self.network_update_frequency:
@@ -189,6 +195,7 @@ class DQNAgent(DecayingEpsilonGreedy):
                 self.network.learn_from(batch)
 
     def action_for_state(self, state: Any) -&gt; Any:
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
         state_flat = state.flatten()
         if self.buffer.ready_to_predict():
             action = super().action_for_state(state_flat)
@@ -198,18 +205,18 @@ class DQNAgent(DecayingEpsilonGreedy):
         return action
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
-        # TODO:
-        pass
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
 
-    def explore(self):
+    def explore(self) -&gt; float:
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
         return self.random_state.choice(self.actions)
 
-    def exploit(self, state: Any):
+    def exploit(self, state: Any) -&gt; float:
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
         return self.network.best_action_for_state(state)
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+        &#34;&#34;&#34;TODO&#34;&#34;&#34;
         if done and self.buffer.ready_to_predict():
             self._decay()
         state_flat = state.flatten()
@@ -224,18 +231,65 @@ class DQNAgent(DecayingEpsilonGreedy):
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="deeprecsys.rl.agents.dqn.DQNAgent.store_experience"><code class="name flex">
-<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, new_state: Any)</span>
+<dt id="deeprecsys.rl.agents.dqn.DQNAgent.action_for_state"><code class="name flex">
+<span>def <span class="ident">action_for_state</span></span>(<span>self, state: Any) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>TODO</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def store_experience(
-    self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-):
+<pre><code class="python">def action_for_state(self, state: Any) -&gt; Any:
+    &#34;&#34;&#34;TODO&#34;&#34;&#34;
+    state_flat = state.flatten()
+    if self.buffer.ready_to_predict():
+        action = super().action_for_state(state_flat)
+    else:
+        action = self.explore()
+    self._check_update_network()
+    return action</code></pre>
+</details>
+</dd>
+<dt id="deeprecsys.rl.agents.dqn.DQNAgent.exploit"><code class="name flex">
+<span>def <span class="ident">exploit</span></span>(<span>self, state: Any) ‑> float</span>
+</code></dt>
+<dd>
+<div class="desc"><p>TODO</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def exploit(self, state: Any) -&gt; float:
+    &#34;&#34;&#34;TODO&#34;&#34;&#34;
+    return self.network.best_action_for_state(state)</code></pre>
+</details>
+</dd>
+<dt id="deeprecsys.rl.agents.dqn.DQNAgent.explore"><code class="name flex">
+<span>def <span class="ident">explore</span></span>(<span>self) ‑> float</span>
+</code></dt>
+<dd>
+<div class="desc"><p>TODO</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def explore(self) -&gt; float:
+    &#34;&#34;&#34;TODO&#34;&#34;&#34;
+    return self.random_state.choice(self.actions)</code></pre>
+</details>
+</dd>
+<dt id="deeprecsys.rl.agents.dqn.DQNAgent.store_experience"><code class="name flex">
+<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, new_state: Any) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>TODO</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+    &#34;&#34;&#34;TODO&#34;&#34;&#34;
     if done and self.buffer.ready_to_predict():
         self._decay()
     state_flat = state.flatten()
@@ -247,27 +301,16 @@ class DQNAgent(DecayingEpsilonGreedy):
 <span>def <span class="ident">top_k_actions_for_state</span></span>(<span>self, state: Any, k: int = 1) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>TODO</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
-    # TODO:
-    pass</code></pre>
+    &#34;&#34;&#34;TODO&#34;&#34;&#34;</code></pre>
 </details>
 </dd>
 </dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="deeprecsys.rl.agents.epsilon_greedy.DecayingEpsilonGreedy" href="epsilon_greedy.html#deeprecsys.rl.agents.epsilon_greedy.DecayingEpsilonGreedy">DecayingEpsilonGreedy</a></b></code>:
-<ul class="hlist">
-<li><code><a title="deeprecsys.rl.agents.epsilon_greedy.DecayingEpsilonGreedy.action_for_state" href="epsilon_greedy.html#deeprecsys.rl.agents.epsilon_greedy.DecayingEpsilonGreedy.action_for_state">action_for_state</a></code></li>
-<li><code><a title="deeprecsys.rl.agents.epsilon_greedy.DecayingEpsilonGreedy.exploit" href="epsilon_greedy.html#deeprecsys.rl.agents.epsilon_greedy.DecayingEpsilonGreedy.exploit">exploit</a></code></li>
-<li><code><a title="deeprecsys.rl.agents.epsilon_greedy.DecayingEpsilonGreedy.explore" href="epsilon_greedy.html#deeprecsys.rl.agents.epsilon_greedy.DecayingEpsilonGreedy.explore">explore</a></code></li>
-</ul>
-</li>
-</ul>
 </dd>
 </dl>
 </section>
@@ -288,6 +331,9 @@ class DQNAgent(DecayingEpsilonGreedy):
 <li>
 <h4><code><a title="deeprecsys.rl.agents.dqn.DQNAgent" href="#deeprecsys.rl.agents.dqn.DQNAgent">DQNAgent</a></code></h4>
 <ul class="">
+<li><code><a title="deeprecsys.rl.agents.dqn.DQNAgent.action_for_state" href="#deeprecsys.rl.agents.dqn.DQNAgent.action_for_state">action_for_state</a></code></li>
+<li><code><a title="deeprecsys.rl.agents.dqn.DQNAgent.exploit" href="#deeprecsys.rl.agents.dqn.DQNAgent.exploit">exploit</a></code></li>
+<li><code><a title="deeprecsys.rl.agents.dqn.DQNAgent.explore" href="#deeprecsys.rl.agents.dqn.DQNAgent.explore">explore</a></code></li>
 <li><code><a title="deeprecsys.rl.agents.dqn.DQNAgent.store_experience" href="#deeprecsys.rl.agents.dqn.DQNAgent.store_experience">store_experience</a></code></li>
 <li><code><a title="deeprecsys.rl.agents.dqn.DQNAgent.top_k_actions_for_state" href="#deeprecsys.rl.agents.dqn.DQNAgent.top_k_actions_for_state">top_k_actions_for_state</a></code></li>
 </ul>
@@ -298,7 +344,7 @@ class DQNAgent(DecayingEpsilonGreedy):
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>

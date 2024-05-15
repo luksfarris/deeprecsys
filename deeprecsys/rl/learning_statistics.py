@@ -11,9 +11,7 @@ sns.set_context("paper")
 class LearningStatistics:
     """Special class to store and aggregate learning parameters."""
 
-    def __init__(
-        self, model_name: Optional[str] = None, env_name: Optional[str] = None
-    ):
+    def __init__(self, model_name: Optional[str] = None, env_name: Optional[str] = None):
         """Start the collector for the given model and environment name."""
         self.collected_metrics: List[Dict] = []
         self.model_name = model_name

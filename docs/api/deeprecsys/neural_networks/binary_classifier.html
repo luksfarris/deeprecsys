@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>deeprecsys.rl API documentation</title>
+<title>deeprecsys.neural_networks.binary_classifier API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,62 +19,47 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>deeprecsys.rl</code></h1>
+<h1 class="title">Module <code>deeprecsys.neural_networks.binary_classifier</code></h1>
 </header>
 <section id="section-intro">
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from logging import Logger as DefaultLogger
-from typing import Any
+<pre><code class="python">from torch import Tensor
+from torch.nn import BCELoss, Linear, ReLU, Sequential, Sigmoid
+from torch.optim import Adam
+
+from deeprecsys.neural_networks.base_network import BaseNetwork
 
 
-class Logger(DefaultLogger):
-    &#34;&#34;&#34;Shared logger that only prints when verbose is true&#34;&#34;&#34;
+class BinaryClassifier(BaseNetwork):
+    def __init__(self, input_shape: int, learning_rate: float = 0.0025):
+        super().__init__()
+        layers = [
+            Linear(in_features=input_shape, out_features=256, bias=True),
+            ReLU(),
+            Linear(in_features=256, out_features=64, bias=True),
+            ReLU(),
+            Linear(in_features=64, out_features=16, bias=True),
+            ReLU(),
+            Linear(in_features=16, out_features=1, bias=True),
+            Sigmoid(),
+        ]
+        self.model = Sequential(*layers)
+        self.optimizer = Adam(self.parameters(), lr=learning_rate)
+        self.loss_function = BCELoss()
+        if self.device == &#34;cuda&#34;:
+            self.model.cuda()
 
-    verbose: bool = True
-    instance: &#34;Logger&#34; = None
-
-    @classmethod
-    def create(cls) -&gt; &#34;Logger&#34;:
-        &#34;&#34;&#34;Create or reuse a shared logger class&#34;&#34;&#34;
-        if not cls.instance:
-            cls.instance = cls(&#34;deeprecsys&#34;)
-        return cls.instance
-
-    def _log(self, *args: Any, **kwargs: Any) -&gt; None:
-        if Logger.verbose:
-            # noinspection PyProtectedMember
-            super(Logger, self)._log(*args, **kwargs)
-
-    @staticmethod
-    def print(*args: Any, **kwargs: Any) -&gt; None:
-        &#34;&#34;&#34;Print wrapper that only prints when verbose is True&#34;&#34;&#34;
-        if Logger.verbose:
-            print(*args, **kwargs)</code></pre>
+    def update(self, features_batch: Tensor, targets_batch: Tensor) -&gt; float:
+        predicted_selection = self.forward(features_batch)
+        loss = self.loss_function(predicted_selection, targets_batch)  # .reshape(-1,1))
+        self.run_backpropagation(loss)
+        return loss.item()</code></pre>
 </details>
 </section>
 <section>
-<h2 class="section-title" id="header-submodules">Sub-modules</h2>
-<dl>
-<dt><code class="name"><a title="deeprecsys.rl.agents" href="agents/index.html">deeprecsys.rl.agents</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="deeprecsys.rl.experience_replay" href="experience_replay/index.html">deeprecsys.rl.experience_replay</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="deeprecsys.rl.learning_statistics" href="learning_statistics.html">deeprecsys.rl.learning_statistics</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="deeprecsys.rl.manager" href="manager.html">deeprecsys.rl.manager</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
 </section>
 <section>
 </section>
@@ -83,93 +68,80 @@ class Logger(DefaultLogger):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="deeprecsys.rl.Logger"><code class="flex name class">
-<span>class <span class="ident">Logger</span></span>
-<span>(</span><span>name, level=0)</span>
+<dt id="deeprecsys.neural_networks.binary_classifier.BinaryClassifier"><code class="flex name class">
+<span>class <span class="ident">BinaryClassifier</span></span>
+<span>(</span><span>input_shape: int, learning_rate: float = 0.0025)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Shared logger that only prints when verbose is true</p>
-<p>Initialize the logger with a name and an optional level.</p></div>
+<div class="desc"><p>Base class representing a neural network, contains utility and common methods</p>
+<p>Automatically detects if the device is CUDA or CPU</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Logger(DefaultLogger):
-    &#34;&#34;&#34;Shared logger that only prints when verbose is true&#34;&#34;&#34;
+<pre><code class="python">class BinaryClassifier(BaseNetwork):
+    def __init__(self, input_shape: int, learning_rate: float = 0.0025):
+        super().__init__()
+        layers = [
+            Linear(in_features=input_shape, out_features=256, bias=True),
+            ReLU(),
+            Linear(in_features=256, out_features=64, bias=True),
+            ReLU(),
+            Linear(in_features=64, out_features=16, bias=True),
+            ReLU(),
+            Linear(in_features=16, out_features=1, bias=True),
+            Sigmoid(),
+        ]
+        self.model = Sequential(*layers)
+        self.optimizer = Adam(self.parameters(), lr=learning_rate)
+        self.loss_function = BCELoss()
+        if self.device == &#34;cuda&#34;:
+            self.model.cuda()
 
-    verbose: bool = True
-    instance: &#34;Logger&#34; = None
-
-    @classmethod
-    def create(cls) -&gt; &#34;Logger&#34;:
-        &#34;&#34;&#34;Create or reuse a shared logger class&#34;&#34;&#34;
-        if not cls.instance:
-            cls.instance = cls(&#34;deeprecsys&#34;)
-        return cls.instance
-
-    def _log(self, *args: Any, **kwargs: Any) -&gt; None:
-        if Logger.verbose:
-            # noinspection PyProtectedMember
-            super(Logger, self)._log(*args, **kwargs)
-
-    @staticmethod
-    def print(*args: Any, **kwargs: Any) -&gt; None:
-        &#34;&#34;&#34;Print wrapper that only prints when verbose is True&#34;&#34;&#34;
-        if Logger.verbose:
-            print(*args, **kwargs)</code></pre>
+    def update(self, features_batch: Tensor, targets_batch: Tensor) -&gt; float:
+        predicted_selection = self.forward(features_batch)
+        loss = self.loss_function(predicted_selection, targets_batch)  # .reshape(-1,1))
+        self.run_backpropagation(loss)
+        return loss.item()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li>logging.Logger</li>
-<li>logging.Filterer</li>
+<li><a title="deeprecsys.neural_networks.base_network.BaseNetwork" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork">BaseNetwork</a></li>
+<li>torch.nn.modules.module.Module</li>
 </ul>
-<h3>Class variables</h3>
+<h3>Methods</h3>
 <dl>
-<dt id="deeprecsys.rl.Logger.instance"><code class="name">var <span class="ident">instance</span> : <a title="deeprecsys.rl.Logger" href="#deeprecsys.rl.Logger">Logger</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="deeprecsys.rl.Logger.verbose"><code class="name">var <span class="ident">verbose</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Static methods</h3>
-<dl>
-<dt id="deeprecsys.rl.Logger.create"><code class="name flex">
-<span>def <span class="ident">create</span></span>(<span>) ‑> <a title="deeprecsys.rl.Logger" href="#deeprecsys.rl.Logger">Logger</a></span>
+<dt id="deeprecsys.neural_networks.binary_classifier.BinaryClassifier.update"><code class="name flex">
+<span>def <span class="ident">update</span></span>(<span>self, features_batch: torch.Tensor, targets_batch: torch.Tensor) ‑> float</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Create or reuse a shared logger class</p></div>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">@classmethod
-def create(cls) -&gt; &#34;Logger&#34;:
-    &#34;&#34;&#34;Create or reuse a shared logger class&#34;&#34;&#34;
-    if not cls.instance:
-        cls.instance = cls(&#34;deeprecsys&#34;)
-    return cls.instance</code></pre>
-</details>
-</dd>
-<dt id="deeprecsys.rl.Logger.print"><code class="name flex">
-<span>def <span class="ident">print</span></span>(<span>*args: Any, **kwargs: Any) ‑> None</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Print wrapper that only prints when verbose is True</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@staticmethod
-def print(*args: Any, **kwargs: Any) -&gt; None:
-    &#34;&#34;&#34;Print wrapper that only prints when verbose is True&#34;&#34;&#34;
-    if Logger.verbose:
-        print(*args, **kwargs)</code></pre>
+<pre><code class="python">def update(self, features_batch: Tensor, targets_batch: Tensor) -&gt; float:
+    predicted_selection = self.forward(features_batch)
+    loss = self.loss_function(predicted_selection, targets_batch)  # .reshape(-1,1))
+    self.run_backpropagation(loss)
+    return loss.item()</code></pre>
 </details>
 </dd>
 </dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="deeprecsys.neural_networks.base_network.BaseNetwork" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork">BaseNetwork</a></b></code>:
+<ul class="hlist">
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.add_to_tensorboard" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.add_to_tensorboard">add_to_tensorboard</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.disable_learning" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.disable_learning">disable_learning</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.forward" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.forward">forward</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.load" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.load">load</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.run_backpropagation" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.run_backpropagation">run_backpropagation</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.save" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.save">save</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.soft_parameter_update" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.soft_parameter_update">soft_parameter_update</a></code></li>
+</ul>
+</li>
+</ul>
 </dd>
 </dl>
 </section>
@@ -182,26 +154,15 @@ def print(*args: Any, **kwargs: Any) -&gt; None:
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="deeprecsys" href="../index.html">deeprecsys</a></code></li>
-</ul>
-</li>
-<li><h3><a href="#header-submodules">Sub-modules</a></h3>
-<ul>
-<li><code><a title="deeprecsys.rl.agents" href="agents/index.html">deeprecsys.rl.agents</a></code></li>
-<li><code><a title="deeprecsys.rl.experience_replay" href="experience_replay/index.html">deeprecsys.rl.experience_replay</a></code></li>
-<li><code><a title="deeprecsys.rl.learning_statistics" href="learning_statistics.html">deeprecsys.rl.learning_statistics</a></code></li>
-<li><code><a title="deeprecsys.rl.manager" href="manager.html">deeprecsys.rl.manager</a></code></li>
+<li><code><a title="deeprecsys.neural_networks" href="index.html">deeprecsys.neural_networks</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="deeprecsys.rl.Logger" href="#deeprecsys.rl.Logger">Logger</a></code></h4>
+<h4><code><a title="deeprecsys.neural_networks.binary_classifier.BinaryClassifier" href="#deeprecsys.neural_networks.binary_classifier.BinaryClassifier">BinaryClassifier</a></code></h4>
 <ul class="">
-<li><code><a title="deeprecsys.rl.Logger.create" href="#deeprecsys.rl.Logger.create">create</a></code></li>
-<li><code><a title="deeprecsys.rl.Logger.instance" href="#deeprecsys.rl.Logger.instance">instance</a></code></li>
-<li><code><a title="deeprecsys.rl.Logger.print" href="#deeprecsys.rl.Logger.print">print</a></code></li>
-<li><code><a title="deeprecsys.rl.Logger.verbose" href="#deeprecsys.rl.Logger.verbose">verbose</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.binary_classifier.BinaryClassifier.update" href="#deeprecsys.neural_networks.binary_classifier.BinaryClassifier.update">update</a></code></li>
 </ul>
 </li>
 </ul>

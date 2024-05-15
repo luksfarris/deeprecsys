@@ -1,0 +1,64 @@
+version: "3"
+
+env:
+  VENV_FOLDER: venv
+  EXEC_FOLDER: bin
+
+tasks:
+  setup:
+    desc: Sets up the virtual environment and builds the dependencies
+    cmds:
+      - python3.11 -m venv ${VENV_FOLDER}
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/pip install setuptools==68.0.0 wheel==0.43.0 pip==24.0
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/pip install poetry==1.8.3
+      - task: dependencies
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/poetry run pre-commit install
+
+  version:
+    desc: Shows the version of the package
+    silent: true
+    cmds:
+      - echo $(${VENV_FOLDER}/${EXEC_FOLDER}/poetry version -s)
+
+  dependencies:
+    internal: true
+    cmds:
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/poetry install --all-extras
+
+  lint:
+    desc: Runs all the pre-commit hooks
+    cmds:
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/poetry run pre-commit run --all-files
+
+  test:
+    desc: Runs all the tests
+    cmds:
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/poetry run coverage run -m pytest tests
+
+  docs:
+    desc: Generates the documentation
+    cmds:
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/poetry run coverage html -d docs/coverage
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/poetry run pdoc --html --force deeprecsys -o docs/api
+
+  bump:
+    desc: Bumps the version of the package
+    cmds:
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/poetry version patch
+      - git config --global user.name 'Github Actions'
+      - git config --global user.email 'luksfarris@users.noreply.github.com'
+      - git commit -am "Bump to version $(task version)"
+      - git tag -a v$(task version) -m "Release version $(task version)"
+
+  build:
+    desc: Builds the package
+    internal: true
+    cmds:
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/poetry build
+
+  publish:
+    desc: Builds the package and publishes it to PyPI
+    cmds:
+      - task: build
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/poetry config pypi-token.pypi ${PYPI_KEY}
+      - ${VENV_FOLDER}/${EXEC_FOLDER}/poetry publish

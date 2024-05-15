@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
-<title>deeprecsys.rl.neural_networks.gaussian_actor API documentation</title>
+<meta name="generator" content="pdoc 0.10.0" />
+<title>deeprecsys.neural_networks.gaussian_actor API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,21 +19,24 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>deeprecsys.rl.neural_networks.gaussian_actor</code></h1>
+<h1 class="title">Module <code>deeprecsys.neural_networks.gaussian_actor</code></h1>
 </header>
 <section id="section-intro">
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from deeprecsys.rl.neural_networks.base_network import BaseNetwork
-from deeprecsys.rl.neural_networks.deep_q_network import sequential_architecture
+<pre><code class="python">from typing import Tuple
+
 import torch
-from torch.distributions import Normal
-import numpy as np
+from numpy import ndarray
 from torch import FloatTensor, Tensor
+from torch.distributions import Normal
 from torch.optim import Adam
-from deeprecsys.rl.neural_networks.q_value_estimator import TwinnedQValueEstimator
+
+from deeprecsys.neural_networks.base_network import BaseNetwork
+from deeprecsys.neural_networks.deep_q_network import sequential_architecture
+from deeprecsys.neural_networks.q_value_estimator import TwinnedQValueEstimator
 
 LOG_STD_MAX = 2
 LOG_STD_MIN = -20
@@ -41,6 +44,8 @@ EPSILON = 1e-6
 
 
 class GaussianActor(BaseNetwork):
+    &#34;&#34;&#34;Actor network for the soft-actor-critic agent.&#34;&#34;&#34;
+
     def __init__(
         self,
         inputs: int,
@@ -49,6 +54,7 @@ class GaussianActor(BaseNetwork):
         entropy_coefficient: float = 0.2,
         discount_factor: float = 0.99,
     ):
+        &#34;&#34;&#34;Create the actor network with the provided parameters.&#34;&#34;&#34;
         super().__init__()
         network_output = outputs * 2  # estimation of means and standard deviations
         layers = [inputs] + [inputs * 2, inputs * 2] + [network_output]
@@ -58,21 +64,23 @@ class GaussianActor(BaseNetwork):
         self.alpha = torch.tensor(entropy_coefficient).to(self.device)
         self.gamma = discount_factor
 
-    def forward(self, states: FloatTensor):
+    def forward(self, states: FloatTensor) -&gt; Tuple:
+        &#34;&#34;&#34;Forward the given state in the network and return the output&#34;&#34;&#34;
         mean, log_std = torch.chunk(self.model(states), 2, dim=-1)
         log_std = torch.clamp(log_std, min=LOG_STD_MIN, max=LOG_STD_MAX)
         return mean, log_std
 
-    def predict(self, states: np.array):
+    def predict(self, states: ndarray) -&gt; Tuple:
+        &#34;&#34;&#34;Predict the next best actions for the given state.&#34;&#34;&#34;
         states_tensor = FloatTensor(states).to(device=self.device)
-        # calculate Gaussian distribusion of (mean, std)
+        # calculate Gaussian distribution of (mean, std)
         means, log_stds = self.forward(states_tensor)
         stds = log_stds.exp()
         normals = Normal(means, stds)
         # sample actions
         xs = normals.rsample()
         actions = torch.tanh(xs)
-        # calculate entropies
+        # calculate entropy
         log_probs = normals.log_prob(xs) - torch.log(1 - actions.pow(2) + EPSILON)
         entropies = -log_probs.sum(dim=1, keepdim=True)
         return actions, entropies, torch.tanh(means)
@@ -87,7 +95,7 @@ class GaussianActor(BaseNetwork):
         weights: Tensor,
         critic: TwinnedQValueEstimator,
     ) -&gt; Tensor:
-        &#34;&#34;&#34; Calculates the loss, backpropagates, and returns the entropy. &#34;&#34;&#34;
+        &#34;&#34;&#34;Calculate the loss, backpropagates, and returns the entropy.&#34;&#34;&#34;
         # We re-sample actions to calculate expectations of Q.
         sampled_action, entropy, _ = self.predict(states)
         # expectations of Q with clipped double Q technique
@@ -108,6 +116,7 @@ class GaussianActor(BaseNetwork):
         dones: Tensor,
         target_critic: TwinnedQValueEstimator,
     ) -&gt; Tensor:
+        &#34;&#34;&#34;Estimate the Q-value for the next states&#34;&#34;&#34;
         with torch.no_grad():
             # actor samples next actions
             next_actions, next_entropies, _ = self.predict(next_states)
@@ -128,36 +137,20 @@ class GaussianActor(BaseNetwork):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="deeprecsys.rl.neural_networks.gaussian_actor.GaussianActor"><code class="flex name class">
+<dt id="deeprecsys.neural_networks.gaussian_actor.GaussianActor"><code class="flex name class">
 <span>class <span class="ident">GaussianActor</span></span>
 <span>(</span><span>inputs: int, outputs: int, learning_rate: float = 0.001, entropy_coefficient: float = 0.2, discount_factor: float = 0.99)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Base class for all neural network modules.</p>
-<p>Your models should also subclass this class.</p>
-<p>Modules can also contain other Modules, allowing to nest them in
-a tree structure. You can assign the submodules as regular attributes::</p>
-<pre><code>import torch.nn as nn
-import torch.nn.functional as F
-
-class Model(nn.Module):
-    def __init__(self):
-        super(Model, self).__init__()
-        self.conv1 = nn.Conv2d(1, 20, 5)
-        self.conv2 = nn.Conv2d(20, 20, 5)
-
-    def forward(self, x):
-        x = F.relu(self.conv1(x))
-        return F.relu(self.conv2(x))
-</code></pre>
-<p>Submodules assigned in this way will be registered, and will have their
-parameters converted too when you call :meth:<code>to</code>, etc.</p>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p></div>
+<div class="desc"><p>Actor network for the soft-actor-critic agent.</p>
+<p>Create the actor network with the provided parameters.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class GaussianActor(BaseNetwork):
+    &#34;&#34;&#34;Actor network for the soft-actor-critic agent.&#34;&#34;&#34;
+
     def __init__(
         self,
         inputs: int,
@@ -166,6 +159,7 @@ parameters converted too when you call :meth:<code>to</code>, etc.</p>
         entropy_coefficient: float = 0.2,
         discount_factor: float = 0.99,
     ):
+        &#34;&#34;&#34;Create the actor network with the provided parameters.&#34;&#34;&#34;
         super().__init__()
         network_output = outputs * 2  # estimation of means and standard deviations
         layers = [inputs] + [inputs * 2, inputs * 2] + [network_output]
@@ -175,21 +169,23 @@ parameters converted too when you call :meth:<code>to</code>, etc.</p>
         self.alpha = torch.tensor(entropy_coefficient).to(self.device)
         self.gamma = discount_factor
 
-    def forward(self, states: FloatTensor):
+    def forward(self, states: FloatTensor) -&gt; Tuple:
+        &#34;&#34;&#34;Forward the given state in the network and return the output&#34;&#34;&#34;
         mean, log_std = torch.chunk(self.model(states), 2, dim=-1)
         log_std = torch.clamp(log_std, min=LOG_STD_MIN, max=LOG_STD_MAX)
         return mean, log_std
 
-    def predict(self, states: np.array):
+    def predict(self, states: ndarray) -&gt; Tuple:
+        &#34;&#34;&#34;Predict the next best actions for the given state.&#34;&#34;&#34;
         states_tensor = FloatTensor(states).to(device=self.device)
-        # calculate Gaussian distribusion of (mean, std)
+        # calculate Gaussian distribution of (mean, std)
         means, log_stds = self.forward(states_tensor)
         stds = log_stds.exp()
         normals = Normal(means, stds)
         # sample actions
         xs = normals.rsample()
         actions = torch.tanh(xs)
-        # calculate entropies
+        # calculate entropy
         log_probs = normals.log_prob(xs) - torch.log(1 - actions.pow(2) + EPSILON)
         entropies = -log_probs.sum(dim=1, keepdim=True)
         return actions, entropies, torch.tanh(means)
@@ -204,7 +200,7 @@ parameters converted too when you call :meth:<code>to</code>, etc.</p>
         weights: Tensor,
         critic: TwinnedQValueEstimator,
     ) -&gt; Tensor:
-        &#34;&#34;&#34; Calculates the loss, backpropagates, and returns the entropy. &#34;&#34;&#34;
+        &#34;&#34;&#34;Calculate the loss, backpropagates, and returns the entropy.&#34;&#34;&#34;
         # We re-sample actions to calculate expectations of Q.
         sampled_action, entropy, _ = self.predict(states)
         # expectations of Q with clipped double Q technique
@@ -225,6 +221,7 @@ parameters converted too when you call :meth:<code>to</code>, etc.</p>
         dones: Tensor,
         target_critic: TwinnedQValueEstimator,
     ) -&gt; Tensor:
+        &#34;&#34;&#34;Estimate the Q-value for the next states&#34;&#34;&#34;
         with torch.no_grad():
             # actor samples next actions
             next_actions, next_entropies, _ = self.predict(next_states)
@@ -237,16 +234,16 @@ parameters converted too when you call :meth:<code>to</code>, etc.</p>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork">BaseNetwork</a></li>
+<li><a title="deeprecsys.neural_networks.base_network.BaseNetwork" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork">BaseNetwork</a></li>
 <li>torch.nn.modules.module.Module</li>
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="deeprecsys.rl.neural_networks.gaussian_actor.GaussianActor.calculate_loss"><code class="name flex">
-<span>def <span class="ident">calculate_loss</span></span>(<span>self, states: torch.Tensor, actions: torch.Tensor, rewards: torch.Tensor, dones: torch.Tensor, next_states: torch.Tensor, weights: torch.Tensor, critic: <a title="deeprecsys.rl.neural_networks.q_value_estimator.TwinnedQValueEstimator" href="q_value_estimator.html#deeprecsys.rl.neural_networks.q_value_estimator.TwinnedQValueEstimator">TwinnedQValueEstimator</a>) ‑> torch.Tensor</span>
+<dt id="deeprecsys.neural_networks.gaussian_actor.GaussianActor.calculate_loss"><code class="name flex">
+<span>def <span class="ident">calculate_loss</span></span>(<span>self, states: torch.Tensor, actions: torch.Tensor, rewards: torch.Tensor, dones: torch.Tensor, next_states: torch.Tensor, weights: torch.Tensor, critic: <a title="deeprecsys.neural_networks.q_value_estimator.TwinnedQValueEstimator" href="q_value_estimator.html#deeprecsys.neural_networks.q_value_estimator.TwinnedQValueEstimator">TwinnedQValueEstimator</a>) ‑> torch.Tensor</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculates the loss, backpropagates, and returns the entropy.</p></div>
+<div class="desc"><p>Calculate the loss, backpropagates, and returns the entropy.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -261,7 +258,7 @@ parameters converted too when you call :meth:<code>to</code>, etc.</p>
     weights: Tensor,
     critic: TwinnedQValueEstimator,
 ) -&gt; Tensor:
-    &#34;&#34;&#34; Calculates the loss, backpropagates, and returns the entropy. &#34;&#34;&#34;
+    &#34;&#34;&#34;Calculate the loss, backpropagates, and returns the entropy.&#34;&#34;&#34;
     # We re-sample actions to calculate expectations of Q.
     sampled_action, entropy, _ = self.predict(states)
     # expectations of Q with clipped double Q technique
@@ -274,11 +271,11 @@ parameters converted too when you call :meth:<code>to</code>, etc.</p>
     return entropy</code></pre>
 </details>
 </dd>
-<dt id="deeprecsys.rl.neural_networks.gaussian_actor.GaussianActor.calculate_target_q"><code class="name flex">
-<span>def <span class="ident">calculate_target_q</span></span>(<span>self, states: torch.Tensor, actions: torch.Tensor, rewards: torch.Tensor, next_states: torch.Tensor, dones: torch.Tensor, target_critic: <a title="deeprecsys.rl.neural_networks.q_value_estimator.TwinnedQValueEstimator" href="q_value_estimator.html#deeprecsys.rl.neural_networks.q_value_estimator.TwinnedQValueEstimator">TwinnedQValueEstimator</a>) ‑> torch.Tensor</span>
+<dt id="deeprecsys.neural_networks.gaussian_actor.GaussianActor.calculate_target_q"><code class="name flex">
+<span>def <span class="ident">calculate_target_q</span></span>(<span>self, states: torch.Tensor, actions: torch.Tensor, rewards: torch.Tensor, next_states: torch.Tensor, dones: torch.Tensor, target_critic: <a title="deeprecsys.neural_networks.q_value_estimator.TwinnedQValueEstimator" href="q_value_estimator.html#deeprecsys.neural_networks.q_value_estimator.TwinnedQValueEstimator">TwinnedQValueEstimator</a>) ‑> torch.Tensor</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Estimate the Q-value for the next states</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -292,6 +289,7 @@ parameters converted too when you call :meth:<code>to</code>, etc.</p>
     dones: Tensor,
     target_critic: TwinnedQValueEstimator,
 ) -&gt; Tensor:
+    &#34;&#34;&#34;Estimate the Q-value for the next states&#34;&#34;&#34;
     with torch.no_grad():
         # actor samples next actions
         next_actions, next_entropies, _ = self.predict(next_states)
@@ -303,25 +301,42 @@ parameters converted too when you call :meth:<code>to</code>, etc.</p>
     return target_q</code></pre>
 </details>
 </dd>
-<dt id="deeprecsys.rl.neural_networks.gaussian_actor.GaussianActor.predict"><code class="name flex">
-<span>def <span class="ident">predict</span></span>(<span>self, states: <built-in function array>)</span>
+<dt id="deeprecsys.neural_networks.gaussian_actor.GaussianActor.forward"><code class="name flex">
+<span>def <span class="ident">forward</span></span>(<span>self, states: torch.FloatTensor) ‑> Tuple</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Forward the given state in the network and return the output</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def predict(self, states: np.array):
+<pre><code class="python">def forward(self, states: FloatTensor) -&gt; Tuple:
+    &#34;&#34;&#34;Forward the given state in the network and return the output&#34;&#34;&#34;
+    mean, log_std = torch.chunk(self.model(states), 2, dim=-1)
+    log_std = torch.clamp(log_std, min=LOG_STD_MIN, max=LOG_STD_MAX)
+    return mean, log_std</code></pre>
+</details>
+</dd>
+<dt id="deeprecsys.neural_networks.gaussian_actor.GaussianActor.predict"><code class="name flex">
+<span>def <span class="ident">predict</span></span>(<span>self, states: numpy.ndarray) ‑> Tuple</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Predict the next best actions for the given state.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def predict(self, states: ndarray) -&gt; Tuple:
+    &#34;&#34;&#34;Predict the next best actions for the given state.&#34;&#34;&#34;
     states_tensor = FloatTensor(states).to(device=self.device)
-    # calculate Gaussian distribusion of (mean, std)
+    # calculate Gaussian distribution of (mean, std)
     means, log_stds = self.forward(states_tensor)
     stds = log_stds.exp()
     normals = Normal(means, stds)
     # sample actions
     xs = normals.rsample()
     actions = torch.tanh(xs)
-    # calculate entropies
+    # calculate entropy
     log_probs = normals.log_prob(xs) - torch.log(1 - actions.pow(2) + EPSILON)
     entropies = -log_probs.sum(dim=1, keepdim=True)
     return actions, entropies, torch.tanh(means)</code></pre>
@@ -330,13 +345,14 @@ parameters converted too when you call :meth:<code>to</code>, etc.</p>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork">BaseNetwork</a></b></code>:
+<li><code><b><a title="deeprecsys.neural_networks.base_network.BaseNetwork" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork">BaseNetwork</a></b></code>:
 <ul class="hlist">
-<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.forward" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.forward">forward</a></code></li>
-<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.load" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.load">load</a></code></li>
-<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.run_backpropagation" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.run_backpropagation">run_backpropagation</a></code></li>
-<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.save" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.save">save</a></code></li>
-<li><code><a title="deeprecsys.rl.neural_networks.base_network.BaseNetwork.soft_parameter_update" href="base_network.html#deeprecsys.rl.neural_networks.base_network.BaseNetwork.soft_parameter_update">soft_parameter_update</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.add_to_tensorboard" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.add_to_tensorboard">add_to_tensorboard</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.disable_learning" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.disable_learning">disable_learning</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.load" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.load">load</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.run_backpropagation" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.run_backpropagation">run_backpropagation</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.save" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.save">save</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.base_network.BaseNetwork.soft_parameter_update" href="base_network.html#deeprecsys.neural_networks.base_network.BaseNetwork.soft_parameter_update">soft_parameter_update</a></code></li>
 </ul>
 </li>
 </ul>
@@ -352,17 +368,18 @@ parameters converted too when you call :meth:<code>to</code>, etc.</p>
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="deeprecsys.rl.neural_networks" href="index.html">deeprecsys.rl.neural_networks</a></code></li>
+<li><code><a title="deeprecsys.neural_networks" href="index.html">deeprecsys.neural_networks</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="deeprecsys.rl.neural_networks.gaussian_actor.GaussianActor" href="#deeprecsys.rl.neural_networks.gaussian_actor.GaussianActor">GaussianActor</a></code></h4>
+<h4><code><a title="deeprecsys.neural_networks.gaussian_actor.GaussianActor" href="#deeprecsys.neural_networks.gaussian_actor.GaussianActor">GaussianActor</a></code></h4>
 <ul class="">
-<li><code><a title="deeprecsys.rl.neural_networks.gaussian_actor.GaussianActor.calculate_loss" href="#deeprecsys.rl.neural_networks.gaussian_actor.GaussianActor.calculate_loss">calculate_loss</a></code></li>
-<li><code><a title="deeprecsys.rl.neural_networks.gaussian_actor.GaussianActor.calculate_target_q" href="#deeprecsys.rl.neural_networks.gaussian_actor.GaussianActor.calculate_target_q">calculate_target_q</a></code></li>
-<li><code><a title="deeprecsys.rl.neural_networks.gaussian_actor.GaussianActor.predict" href="#deeprecsys.rl.neural_networks.gaussian_actor.GaussianActor.predict">predict</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.gaussian_actor.GaussianActor.calculate_loss" href="#deeprecsys.neural_networks.gaussian_actor.GaussianActor.calculate_loss">calculate_loss</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.gaussian_actor.GaussianActor.calculate_target_q" href="#deeprecsys.neural_networks.gaussian_actor.GaussianActor.calculate_target_q">calculate_target_q</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.gaussian_actor.GaussianActor.forward" href="#deeprecsys.neural_networks.gaussian_actor.GaussianActor.forward">forward</a></code></li>
+<li><code><a title="deeprecsys.neural_networks.gaussian_actor.GaussianActor.predict" href="#deeprecsys.neural_networks.gaussian_actor.GaussianActor.predict">predict</a></code></li>
 </ul>
 </li>
 </ul>
@@ -371,7 +388,7 @@ parameters converted too when you call :meth:<code>to</code>, etc.</p>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>

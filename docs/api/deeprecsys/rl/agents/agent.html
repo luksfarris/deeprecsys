@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>deeprecsys.rl.agents.agent API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -27,46 +27,50 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">from abc import ABC, abstractmethod
-from gym import Space
 from typing import Any
+
+from gymnasium import Space
 
 
 class ReinforcementLearning(ABC):
+    &#34;&#34;&#34;Abstract class that encapsulates the behavior of RL models.&#34;&#34;&#34;
+
     @abstractmethod
     def action_for_state(self, state: Any) -&gt; Any:
-        pass
+        &#34;&#34;&#34;Given a state, return the next predicted action.&#34;&#34;&#34;
 
     @abstractmethod
     def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
-        pass
+        &#34;&#34;&#34;Retrieve the next K best actions for this state.&#34;&#34;&#34;
 
     @abstractmethod
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
-        pass
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+        &#34;&#34;&#34;Store an experience (used in case of experience replay buffers)&#34;&#34;&#34;
 
 
 class RandomAgent(ReinforcementLearning):
     &#34;&#34;&#34;An agent that randomly samples actions, regardless of the
-    environment&#39;s state.&#34;&#34;&#34;
+    environment&#39;s state.
+    &#34;&#34;&#34;
 
     action_space: Space
 
-    def __init__(self, action_space: Space, random_state=42):
+    def __init__(self, action_space: Space, random_state: Any = 42):
+        &#34;&#34;&#34;Start the agent with the provided action space and seed.&#34;&#34;&#34;
         self.action_space = action_space
         # we seed the state so actions are reproducible
         self.action_space.seed(random_state)
 
     def action_for_state(self, state: Any) -&gt; Any:
+        &#34;&#34;&#34;Sample a random action from the action space.&#34;&#34;&#34;
         return self.action_space.sample()
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
+        &#34;&#34;&#34;Randomly sample K actions from the action space.&#34;&#34;&#34;
         return self.action_space.sample()
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+        &#34;&#34;&#34;Ignore the experience because this agent doesn&#39;t have any experience replay.&#34;&#34;&#34;
         pass</code></pre>
 </details>
 </section>
@@ -81,35 +85,39 @@ class RandomAgent(ReinforcementLearning):
 <dl>
 <dt id="deeprecsys.rl.agents.agent.RandomAgent"><code class="flex name class">
 <span>class <span class="ident">RandomAgent</span></span>
-<span>(</span><span>action_space: gym.spaces.space.Space, random_state=42)</span>
+<span>(</span><span>action_space: gymnasium.spaces.space.Space, random_state: Any = 42)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>An agent that randomly samples actions, regardless of the
-environment's state.</p></div>
+environment's state.</p>
+<p>Start the agent with the provided action space and seed.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class RandomAgent(ReinforcementLearning):
     &#34;&#34;&#34;An agent that randomly samples actions, regardless of the
-    environment&#39;s state.&#34;&#34;&#34;
+    environment&#39;s state.
+    &#34;&#34;&#34;
 
     action_space: Space
 
-    def __init__(self, action_space: Space, random_state=42):
+    def __init__(self, action_space: Space, random_state: Any = 42):
+        &#34;&#34;&#34;Start the agent with the provided action space and seed.&#34;&#34;&#34;
         self.action_space = action_space
         # we seed the state so actions are reproducible
         self.action_space.seed(random_state)
 
     def action_for_state(self, state: Any) -&gt; Any:
+        &#34;&#34;&#34;Sample a random action from the action space.&#34;&#34;&#34;
         return self.action_space.sample()
 
     def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
+        &#34;&#34;&#34;Randomly sample K actions from the action space.&#34;&#34;&#34;
         return self.action_space.sample()
 
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+        &#34;&#34;&#34;Ignore the experience because this agent doesn&#39;t have any experience replay.&#34;&#34;&#34;
         pass</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -119,7 +127,7 @@ environment's state.</p></div>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="deeprecsys.rl.agents.agent.RandomAgent.action_space"><code class="name">var <span class="ident">action_space</span> : gym.spaces.space.Space</code></dt>
+<dt id="deeprecsys.rl.agents.agent.RandomAgent.action_space"><code class="name">var <span class="ident">action_space</span> : gymnasium.spaces.space.Space</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -130,27 +138,27 @@ environment's state.</p></div>
 <span>def <span class="ident">action_for_state</span></span>(<span>self, state: Any) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Sample a random action from the action space.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def action_for_state(self, state: Any) -&gt; Any:
+    &#34;&#34;&#34;Sample a random action from the action space.&#34;&#34;&#34;
     return self.action_space.sample()</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.agents.agent.RandomAgent.store_experience"><code class="name flex">
-<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, new_state: Any)</span>
+<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, new_state: Any) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Ignore the experience because this agent doesn't have any experience replay.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def store_experience(
-    self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-):
+<pre><code class="python">def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+    &#34;&#34;&#34;Ignore the experience because this agent doesn&#39;t have any experience replay.&#34;&#34;&#34;
     pass</code></pre>
 </details>
 </dd>
@@ -158,12 +166,13 @@ environment's state.</p></div>
 <span>def <span class="ident">top_k_actions_for_state</span></span>(<span>self, state: Any, k: int = 1) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Randomly sample K actions from the action space.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
+    &#34;&#34;&#34;Randomly sample K actions from the action space.&#34;&#34;&#34;
     return self.action_space.sample()</code></pre>
 </details>
 </dd>
@@ -173,26 +182,25 @@ environment's state.</p></div>
 <span>class <span class="ident">ReinforcementLearning</span></span>
 </code></dt>
 <dd>
-<div class="desc"><p>Helper class that provides a standard way to create an ABC using
-inheritance.</p></div>
+<div class="desc"><p>Abstract class that encapsulates the behavior of RL models.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ReinforcementLearning(ABC):
+    &#34;&#34;&#34;Abstract class that encapsulates the behavior of RL models.&#34;&#34;&#34;
+
     @abstractmethod
     def action_for_state(self, state: Any) -&gt; Any:
-        pass
+        &#34;&#34;&#34;Given a state, return the next predicted action.&#34;&#34;&#34;
 
     @abstractmethod
     def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
-        pass
+        &#34;&#34;&#34;Retrieve the next K best actions for this state.&#34;&#34;&#34;
 
     @abstractmethod
-    def store_experience(
-        self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-    ):
-        pass</code></pre>
+    def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+        &#34;&#34;&#34;Store an experience (used in case of experience replay buffers)&#34;&#34;&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -213,44 +221,42 @@ inheritance.</p></div>
 <span>def <span class="ident">action_for_state</span></span>(<span>self, state: Any) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Given a state, return the next predicted action.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@abstractmethod
 def action_for_state(self, state: Any) -&gt; Any:
-    pass</code></pre>
+    &#34;&#34;&#34;Given a state, return the next predicted action.&#34;&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.agents.agent.ReinforcementLearning.store_experience"><code class="name flex">
-<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, new_state: Any)</span>
+<span>def <span class="ident">store_experience</span></span>(<span>self, state: Any, action: Any, reward: float, done: bool, new_state: Any) ‑> None</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Store an experience (used in case of experience replay buffers)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@abstractmethod
-def store_experience(
-    self, state: Any, action: Any, reward: float, done: bool, new_state: Any
-):
-    pass</code></pre>
+def store_experience(self, state: Any, action: Any, reward: float, done: bool, new_state: Any) -&gt; None:
+    &#34;&#34;&#34;Store an experience (used in case of experience replay buffers)&#34;&#34;&#34;</code></pre>
 </details>
 </dd>
 <dt id="deeprecsys.rl.agents.agent.ReinforcementLearning.top_k_actions_for_state"><code class="name flex">
 <span>def <span class="ident">top_k_actions_for_state</span></span>(<span>self, state: Any, k: int = 1) ‑> Any</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Retrieve the next K best actions for this state.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@abstractmethod
 def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
-    pass</code></pre>
+    &#34;&#34;&#34;Retrieve the next K best actions for this state.&#34;&#34;&#34;</code></pre>
 </details>
 </dd>
 </dl>
@@ -294,7 +300,7 @@ def top_k_actions_for_state(self, state: Any, k: int = 1) -&gt; Any:
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>

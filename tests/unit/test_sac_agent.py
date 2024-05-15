@@ -1,6 +1,6 @@
 from deeprecsys.rl.agents.soft_actor_critic import SoftActorCritic
 from deeprecsys.rl.learning_statistics import LearningStatistics
-from deeprecsys.rl.manager import CartpoleManager, MovieLensFairnessManager
+from deeprecsys.rl.manager import CartpoleManager
 
 
 def test_sac_init() -> None:
@@ -10,23 +10,6 @@ def test_sac_init() -> None:
     agent = SoftActorCritic(action_space=manager.env.action_space, state_size=4)
     # then the agent is initialized properly
     assert agent is not None
-
-
-def test_sac_recommendation_env() -> None:
-    # given the recsys env
-    manager = MovieLensFairnessManager()
-    # and a SAC agent
-    agent = SoftActorCritic(
-        action_space=manager.env.action_space,
-        state_size=manager.env.observation_space.shape[0],
-        discount_factor=0.95,
-        learning_rate=0.001,
-        timesteps_to_start_predicting=64,
-        target_update_interval=1,
-    )
-    # when we train the agent
-    manager.train(agent, max_episodes=5)
-    # then no errors are raised
 
 
 def test_sac_interaction() -> None:
@@ -47,5 +30,6 @@ def test_sac_interaction() -> None:
     # then it is able to learn
     assert learning_statistics.episode_rewards.tolist()[-1] > 30
     # and it is able to make predictions
-    exploit_action = agent.exploit(manager.env.reset())
+    state, info = manager.env.reset()
+    exploit_action = agent.exploit(state)
     assert exploit_action in [0, 1]

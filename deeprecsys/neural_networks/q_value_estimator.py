@@ -23,16 +23,15 @@ class QValueEstimator(BaseNetwork):
 
     def predict(self, states: Tensor, actions: Tensor) -> Tensor:
         """Given a state and an action, return the estimated Q-Value"""
-        inputs = torch.cat([states, actions.type(FloatTensor)], dim=1).to(
-            device=self.device
-        )
+        inputs = torch.cat([states, actions.type(FloatTensor)], dim=1).to(device=self.device)
         return self.model(inputs)
 
 
 class TwinnedQValueEstimator(BaseNetwork):
     """Estimate the Q-value (expected return) of each (state,action) pair,
     using 2 independent estimators, and predicting with the minimum estimated Q-value.
-    This is the "critic" part of the Actor-Critic model."""
+    This is the "critic" part of the Actor-Critic model.
+    """
 
     def __init__(self, inputs: int, outputs: int = 1, learning_rate: float = 1e-3):
         """Create the two estimators with the provided parameters."""

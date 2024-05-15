@@ -27,21 +27,21 @@ class BaseNetwork(Module):
         """Read the model's parameters from the given path."""
         self.load_state_dict(load(path))
 
-    def soft_parameter_update(
-        self, source_network: Module, update_rate: float = 0.0
-    ) -> None:
+    def soft_parameter_update(self, source_network: Module, update_rate: float = 0.0) -> None:
         """When using target networks, this method updates the parameters of the current network
         using the parameters of the given source network. The update_rate is a float in
         range (0,1) and controls how the update affects the target (self). update_rate=0
         means a full deep copy, and update_rate=1 means the target does not update
         at all. This parameter is usually called Tau. This method is usually called
-        an exponential moving average update."""
-        for t, s in zip(self.parameters(), source_network.parameters()):
+        an exponential moving average update.
+        """
+        for t, s in zip(self.parameters(), source_network.parameters(), strict=False):
             t.data.copy_(t.data * (1.0 - update_rate) + s.data * update_rate)
 
     def run_backpropagation(self, loss: Tensor) -> None:
         """Run backward on the given loss, and step the optimizer.
-        Requires an optimizer property."""
+        Requires an optimizer property.
+        """
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
